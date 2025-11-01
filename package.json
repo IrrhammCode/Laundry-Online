@@ -1,0 +1,18 @@
+{
+  "name": "laundry-dry-clean",
+  "version": "1.0.0",
+  "description": "Laundry & Dry Clean Management System",
+  "main": "index.js",
+  "scripts": {
+    "api:dev": "cd apps/api && npm run dev",
+    "web:dev": "cd apps/web && npm run dev",
+    "dev": "concurrently \"npm run api:dev\" \"npm run web:dev\"",
+    "install:all": "npm install && cd apps/api && npm install && cd ../web && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["laundry", "dry-clean", "management", "nodejs", "express"],
+  "author": "Laundry System Team",
+  "license": "MIT"
+}

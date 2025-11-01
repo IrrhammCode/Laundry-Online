@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courier Dashboard - Laundry & Dry Clean</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-truck"></i>
+                <span>Courier Dashboard</span>
+            </div>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <div class="nav-user">
+                    <span id="courierName"></span>
+                    <button class="btn btn-outline" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>Courier Dashboard</h1>
+                <p>Manage your deliveries and pickups</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats will be loaded dynamically -->
+            </div>
+
+            <!-- Orders List -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>Assigned Orders</h2>
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="orders-container">
+                    <div id="ordersList" class="orders-list">
+                        <!-- Orders will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Order Detail Modal -->
+    <div class="modal" id="orderDetailModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Order Details</h3>
+                <button class="modal-close" id="orderDetailModalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="orderDetailContent">
+                <!-- Order details will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Status Modal -->
+    <div class="modal" id="updateStatusModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Delivery Status</h3>
+                <button class="modal-close" id="updateStatusModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="updateStatusForm">
+                    <div class="form-group">
+                        <label for="deliveryStatus">Delivery Status</label>
+                        <select id="deliveryStatus" name="delivery_status" required>
+                            <option value="PICKED_UP">Picked Up</option>
+                            <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                            <option value="DELIVERED">Delivered</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="deliveryNotes">Notes (Optional)</label>
+                        <textarea id="deliveryNotes" name="notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="cancelStatusUpdate">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../../js/controllers/courier/CourierDashboardController.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+

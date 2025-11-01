@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Laundry System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-tshirt"></i>
+                <span>Laundry & Dry Clean</span>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <div class="nav-user">
+                    <span id="userName">Loading...</span>
+                    <button class="btn btn-outline" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1>Welcome to Dashboard!</h1>
+                <p id="userInfo">Loading user information...</p>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="dashboard-card">
+                    <h2>🎉 Login Successful!</h2>
+                    <p>You have successfully logged into the Laundry System.</p>
+                    
+                    <div class="user-details" id="userDetails">
+                        <h3>User Information:</h3>
+                        <div id="userInfoDisplay"></div>
+                    </div>
+
+                    <div class="dashboard-actions">
+                        <h3>What would you like to do?</h3>
+                        <div class="action-buttons" id="actionButtons">
+                            <!-- Action buttons will be populated based on user role -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check if user is logged in
+        async function checkAuth() {
+            try {
+                // Wait a bit for cookie to be set
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const response = await fetch('http://localhost:3001/api/auth/me', {
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                
+                if (result.ok) {
+                    const user = result.data.user;
+                    document.getElementById('userName').textContent = user.name;
+                    document.getElementById('userInfo').textContent = `Welcome, ${user.name}!`;
+                    
+                    // Display user details
+                    const userInfoDisplay = document.getElementById('userInfoDisplay');
+                    userInfoDisplay.innerHTML = `
+                        <p><strong>Name:</strong> ${user.name}</p>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>Role:</strong> ${user.role}</p>
+                        <p><strong>Phone:</strong> ${user.phone || 'Not provided'}</p>
+                        <p><strong>Address:</strong> ${user.address || 'Not provided'}</p>
+                    `;
+                    
+                    // Show action buttons based on role
+                    showActionButtons(user.role);
+                } else {
+                    // Try to get user info from localStorage as fallback
+                    const userInfo = localStorage.getItem('userInfo');
+                    if (userInfo) {
+                        const user = JSON.parse(userInfo);
+                        document.getElementById('userName').textContent = user.name;
+                        document.getElementById('userInfo').textContent = `Welcome, ${user.name}!`;
+                        
+                        const userInfoDisplay = document.getElementById('userInfoDisplay');
+                        userInfoDisplay.innerHTML = `
+                            <p><strong>Name:</strong> ${user.name}</p>
+                            <p><strong>Email:</strong> ${user.email}</p>
+                            <p><strong>Role:</strong> ${user.role}</p>
+                            <p><strong>Phone:</strong> ${user.phone || 'Not provided'}</p>
+                            <p><strong>Address:</strong> ${user.address || 'Not provided'}</p>
+                        `;
+                        
+                        // Show action buttons based on role
+                        showActionButtons(user.role);
+                    } else {
+                        // Not logged in, redirect to home
+                        window.location.href = 'index.html';
+                    }
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                // Try localStorage fallback
+                const userInfo = localStorage.getItem('userInfo');
+                if (userInfo) {
+                    const user = JSON.parse(userInfo);
+                    document.getElementById('userName').textContent = user.name;
+                    document.getElementById('userInfo').textContent = `Welcome, ${user.name}!`;
+                    
+                    // Show action buttons based on role
+                    showActionButtons(user.role);
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('http://localhost:3001/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                // Clear localStorage
+                localStorage.removeItem('userInfo');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout failed:', error);
+                // Clear localStorage even if API call fails
+                localStorage.removeItem('userInfo');
+                window.location.href = 'index.html';
+            }
+        }
+
+        function showActionButtons(role) {
+            const actionButtons = document.getElementById('actionButtons');
+            
+            if (role === 'CUSTOMER') {
+                actionButtons.innerHTML = `
+                    <a href="order.html" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Order
+                    </a>
+                    <a href="history.html" class="btn btn-outline">
+                        <i class="fas fa-history"></i> View History
+                    </a>
+                    <a href="profile.html" class="btn btn-outline">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                `;
+            } else if (role === 'ADMIN') {
+                actionButtons.innerHTML = `
+                    <a href="admin/dashboard.html" class="btn btn-primary">
+                        <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                    </a>
+                    <a href="admin/orders.html" class="btn btn-outline">
+                        <i class="fas fa-list"></i> Manage Orders
+                    </a>
+                    <a href="admin/services.html" class="btn btn-outline">
+                        <i class="fas fa-cogs"></i> Manage Services
+                    </a>
+                `;
+            } else if (role === 'COURIER') {
+                actionButtons.innerHTML = `
+                    <a href="courier/dashboard.html" class="btn btn-primary">
+                        <i class="fas fa-truck"></i> Courier Dashboard
+                    </a>
+                    <a href="courier/orders.html" class="btn btn-outline">
+                        <i class="fas fa-list"></i> Manage Orders
+                    </a>
+                    <a href="profile.html" class="btn btn-outline">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                `;
+            }
+        }
+
+        // Check auth on page load
+        window.addEventListener('load', checkAuth);
+    </script>
+</body>
+</html>
+
+

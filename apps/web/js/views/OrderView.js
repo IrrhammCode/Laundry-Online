@@ -1,0 +1,288 @@
+// Order View - MVP Pattern
+// Handles all DOM manipulation for Order page
+export class OrderView {
+    constructor() {
+        // Cache DOM elements
+        this.servicesGrid = document.getElementById('servicesGrid');
+        this.orderItems = document.getElementById('orderItems');
+        this.servicesTotalEl = document.getElementById('servicesTotal');
+        this.pickupFeeEl = document.getElementById('pickupFee');
+        this.orderTotalEl = document.getElementById('orderTotal');
+        this.paymentTotalEl = document.getElementById('paymentTotal');
+        this.paymentAmountEl = document.getElementById('paymentAmount');
+        this.paymentModal = document.getElementById('paymentModal');
+    }
+
+    /**
+     * Render services list
+     * @param {Array} services - Array of service objects
+     * @param {Function} onAddService - Callback when service is added
+     */
+    renderServices(services, onAddService) {
+        if (!this.servicesGrid) return;
+
+        this.servicesGrid.innerHTML = services.map(service => `
+            <div class="service-card" data-service-id="${service.id}">
+                <div class="service-icon">
+                    <i class="fas fa-tshirt"></i>
+                </div>
+                <div class="service-name">${service.name}</div>
+                <div class="service-price">Rp ${service.base_price.toLocaleString()}/${service.unit}</div>
+                <div class="service-description">${service.description || ''}</div>
+                <div class="service-controls">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="window.orderController.addService(${service.id})">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Render order items
+     * @param {Array} items - Array of selected order items
+     * @param {Function} onRemove - Callback when item is removed
+     * @param {Function} onUpdateQuantity - Callback when quantity is updated
+     */
+    renderOrderItems(items, onRemove, onUpdateQuantity) {
+        if (!this.orderItems) return;
+
+        if (items.length === 0) {
+            this.orderItems.innerHTML = '<p class="empty-message">No items selected. Please select services above.</p>';
+            return;
+        }
+
+        this.orderItems.innerHTML = items.map(item => `
+            <div class="order-item">
+                <div class="item-info">
+                    <h4>${item.service_name}</h4>
+                    <p>Rp ${item.unit_price.toLocaleString()}/${item.unit}</p>
+                </div>
+                <div class="item-controls">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="window.orderController.updateServiceQuantity(${item.service_id}, ${item.qty - 1})">-</button>
+                    <span class="quantity">${item.qty}</span>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="window.orderController.updateServiceQuantity(${item.service_id}, ${item.qty + 1})">+</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="window.orderController.removeService(${item.service_id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="item-subtotal">
+                    Rp ${(item.unit_price * item.qty).toLocaleString()}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Update order summary
+     * @param {number} servicesTotal - Total price of services
+     * @param {number} pickupFee - Pickup fee amount
+     * @param {number} total - Grand total
+     */
+    updateOrderSummary(servicesTotal, pickupFee, total) {
+        if (this.servicesTotalEl) {
+            this.servicesTotalEl.textContent = `Rp ${servicesTotal.toLocaleString()}`;
+        }
+        if (this.pickupFeeEl) {
+            this.pickupFeeEl.textContent = `Rp ${pickupFee.toLocaleString()}`;
+        }
+        if (this.orderTotalEl) {
+            this.orderTotalEl.textContent = `Rp ${total.toLocaleString()}`;
+        }
+    }
+
+    /**
+     * Show payment modal
+     * @param {Object} order - Order object with price_total
+     */
+    showPaymentModal(order) {
+        if (this.paymentTotalEl) {
+            this.paymentTotalEl.textContent = `Rp ${order.price_total.toLocaleString()}`;
+        }
+        if (this.paymentAmountEl) {
+            this.paymentAmountEl.value = order.price_total;
+        }
+        if (this.paymentModal) {
+            this.paymentModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    /**
+     * Hide payment modal
+     */
+    hidePaymentModal() {
+        if (this.paymentModal) {
+            this.paymentModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    /**
+     * Get pickup method from form
+     * @returns {string} - 'PICKUP' or 'SELF'
+     */
+    getPickupMethod() {
+        const checked = document.querySelector('input[name="pickup_method"]:checked');
+        return checked ? checked.value : 'SELF';
+    }
+
+    /**
+     * Get form data
+     * @returns {Object} - Form data object
+     */
+    getFormData() {
+        const form = document.getElementById('orderForm');
+        if (!form) return null;
+
+        const formData = new FormData(form);
+        return {
+            pickup_method: formData.get('pickup_method'),
+            notes: formData.get('notes')
+        };
+    }
+
+    /**
+     * Get payment form data
+     * @returns {Object} - Payment form data
+     */
+    getPaymentFormData() {
+        const form = document.getElementById('paymentForm');
+        if (!form) return null;
+
+        const formData = new FormData(form);
+        return {
+            method: formData.get('method'),
+            amount: parseFloat(formData.get('amount'))
+        };
+    }
+
+    /**
+     * Show alert message
+     * @param {string} message - Alert message
+     * @param {string} type - Alert type (success, error, info)
+     */
+    showAlert(message, type = 'info') {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.alert');
+        existingAlerts.forEach(alert => alert.remove());
+
+        // Create new alert
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.textContent = message;
+
+        // Insert at the top of the page
+        const header = document.querySelector('.header');
+        if (header) {
+            header.insertAdjacentElement('afterend', alert);
+        } else {
+            document.body.insertBefore(alert, document.body.firstChild);
+        }
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+
+    /**
+     * Show loading indicator
+     */
+    showLoading() {
+        // Remove existing loading
+        const existingLoading = document.querySelector('.loading');
+        if (existingLoading) existingLoading.remove();
+
+        // Create loading element
+        const loading = document.createElement('div');
+        loading.className = 'loading';
+        loading.innerHTML = '<div class="spinner"></div>';
+
+        // Insert at the top of the page
+        const header = document.querySelector('.header');
+        if (header) {
+            header.insertAdjacentElement('afterend', loading);
+        } else {
+            document.body.insertBefore(loading, document.body.firstChild);
+        }
+    }
+
+    /**
+     * Hide loading indicator
+     */
+    hideLoading() {
+        const loading = document.querySelector('.loading');
+        if (loading) loading.remove();
+    }
+
+    /**
+     * Show user navigation
+     * @param {Object} user - User object
+     */
+    showUserNav(user) {
+        const userName = document.getElementById('userName');
+        if (userName && user.name) {
+            userName.textContent = user.name;
+        }
+    }
+
+    /**
+     * Setup event listeners for view
+     * @param {Object} callbacks - Object with callback functions
+     */
+    setupEventListeners(callbacks) {
+        // Form submission
+        const orderForm = document.getElementById('orderForm');
+        if (orderForm && callbacks.onOrderSubmit) {
+            orderForm.addEventListener('submit', callbacks.onOrderSubmit);
+        }
+
+        // Pickup method change
+        document.querySelectorAll('input[name="pickup_method"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (callbacks.onPickupMethodChange) {
+                    callbacks.onPickupMethodChange();
+                }
+            });
+        });
+
+        // Payment modal close
+        const paymentModalClose = document.getElementById('paymentModalClose');
+        if (paymentModalClose) {
+            paymentModalClose.addEventListener('click', () => {
+                this.hidePaymentModal();
+            });
+        }
+
+        const cancelPayment = document.getElementById('cancelPayment');
+        if (cancelPayment) {
+            cancelPayment.addEventListener('click', () => {
+                this.hidePaymentModal();
+            });
+        }
+
+        // Payment form submission
+        const paymentForm = document.getElementById('paymentForm');
+        if (paymentForm && callbacks.onPaymentSubmit) {
+            paymentForm.addEventListener('submit', callbacks.onPaymentSubmit);
+        }
+
+        // Logout button
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn && callbacks.onLogout) {
+            logoutBtn.addEventListener('click', callbacks.onLogout);
+        }
+    }
+
+    /**
+     * Redirect to another page
+     * @param {string} url - URL to redirect to
+     */
+    redirect(url) {
+        window.location.href = url;
+    }
+}
+

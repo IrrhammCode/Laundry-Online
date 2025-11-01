@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laundry & Dry Clean - Home</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-tshirt"></i>
+                <span>Laundry & Dry Clean</span>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#services" class="nav-link">Services</a>
+                <a href="#demo" class="nav-link">Demo</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+                <div class="nav-auth" id="navAuth">
+                    <button class="btn btn-outline" id="loginBtn">Login</button>
+                    <button class="btn btn-primary" id="registerBtn">Register</button>
+                    <a href="demo-login.html" class="btn btn-success">
+                        <i class="fas fa-users"></i> Demo Login
+                    </a>
+                </div>
+                <div class="nav-user" id="navUser" style="display: none;">
+                    <span id="userName"></span>
+                    <button class="btn btn-outline" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Professional Laundry & Dry Clean Services</h1>
+            <p class="hero-subtitle">Fast, reliable, and affordable laundry services for your clothes</p>
+            <div class="hero-actions">
+                <button class="btn btn-primary btn-lg" id="orderNowBtn">Order Now</button>
+                <button class="btn btn-outline btn-lg" id="learnMoreBtn">Learn More</button>
+                <a href="demo-login.html" class="btn btn-success btn-lg">
+                    <i class="fas fa-users"></i> Demo Login
+                </a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <i class="fas fa-tshirt hero-icon"></i>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <h2 class="section-title">Our Services</h2>
+            <div class="services-grid" id="servicesGrid">
+                <!-- Services will be loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section">
+        <div class="container">
+            <h2 class="section-title">Try Our System</h2>
+            <p class="demo-subtitle">Test the complete laundry management system with demo accounts</p>
+            <div class="demo-actions">
+                <a href="demo-full.html" class="btn btn-success btn-lg">
+                    <i class="fas fa-rocket"></i> Full Demo
+                </a>
+                <a href="demo-complete.html" class="btn btn-outline btn-lg">
+                    <i class="fas fa-users"></i> API Demo
+                </a>
+            </div>
+            <div class="demo-accounts-preview">
+                <div class="demo-account">
+                    <i class="fas fa-user"></i>
+                    <span>Customer Demo</span>
+                </div>
+                <div class="demo-account">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin Demo</span>
+                </div>
+                <div class="demo-account">
+                    <i class="fas fa-truck"></i>
+                    <span>Courier Demo</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title">Why Choose Us?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-clock feature-icon"></i>
+                    <h3>Fast Service</h3>
+                    <p>Quick turnaround time for all your laundry needs</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-shield-alt feature-icon"></i>
+                    <h3>Quality Guarantee</h3>
+                    <p>Professional cleaning with quality assurance</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-truck feature-icon"></i>
+                    <h3>Pickup & Delivery</h3>
+                    <p>Convenient pickup and delivery service</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-dollar-sign feature-icon"></i>
+                    <h3>Affordable Prices</h3>
+                    <p>Competitive pricing for all services</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>+62 123 456 7890</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>info@laundry.com</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Jl. Laundry No. 123, Jakarta</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Login</h3>
+                <button class="modal-close" id="loginModalClose">&times;</button>
+            </div>
+            <form class="modal-body" id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Login</button>
+                <button type="button" id="resetRateLimitBtn" class="btn btn-outline btn-sm" style="margin-top: 10px; font-size: 12px;">Reset Rate Limit (Dev)</button>
+                <div class="form-footer">
+                    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Register</h3>
+                <button class="modal-close" id="registerModalClose">&times;</button>
+            </div>
+            <form class="modal-body" id="registerForm">
+                <div class="form-group">
+                    <label for="registerName">Full Name</label>
+                    <input type="text" id="registerName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPhone">Phone (Optional)</label>
+                    <input type="tel" id="registerPhone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="registerAddress">Address (Optional)</label>
+                    <textarea id="registerAddress" name="address" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Forgot Password</h3>
+                <button class="modal-close" id="forgotPasswordModalClose">&times;</button>
+            </div>
+            <form class="modal-body" id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="forgotEmail">Email</label>
+                    <input type="email" id="forgotEmail" name="email" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Send Reset Link</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Laundry & Dry Clean</h4>
+                    <p>Professional laundry services for your convenience</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#services">Services</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <p>Phone: +62 123 456 7890</p>
+                    <p>Email: info@laundry.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Laundry & Dry Clean. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="js/controllers/AppController.js"></script>
+</body>
+</html>

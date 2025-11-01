@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Order - Laundry & Dry Clean</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-tshirt"></i>
+                <span>Laundry & Dry Clean</span>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="history.html" class="nav-link">My Orders</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <div class="nav-user">
+                    <span id="userName"></span>
+                    <button class="btn btn-outline" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>Create New Order</h1>
+                <p>Select services and create your laundry order</p>
+            </div>
+
+            <form id="orderForm" class="order-form">
+                <!-- Services Selection -->
+                <div class="form-section">
+                    <h2>Select Services</h2>
+                    <div class="services-grid" id="servicesGrid">
+                        <!-- Services will be loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="form-section">
+                    <h2>Order Items</h2>
+                    <div class="order-items" id="orderItems">
+                        <p class="empty-message">No items selected. Please select services above.</p>
+                    </div>
+                </div>
+
+                <!-- Pickup Method -->
+                <div class="form-section">
+                    <h2>Pickup Method</h2>
+                    <div class="pickup-options">
+                        <label class="radio-option">
+                            <input type="radio" name="pickup_method" value="PICKUP" checked>
+                            <span class="radio-custom"></span>
+                            <div class="option-content">
+                                <h3>Pickup Service</h3>
+                                <p>We will pick up your laundry from your address</p>
+                                <span class="price">+Rp 5,000</span>
+                            </div>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="pickup_method" value="SELF">
+                            <span class="radio-custom"></span>
+                            <div class="option-content">
+                                <h3>Self Service</h3>
+                                <p>You will bring your laundry to our location</p>
+                                <span class="price">Free</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Order Notes -->
+                <div class="form-section">
+                    <h2>Order Notes (Optional)</h2>
+                    <textarea name="notes" id="orderNotes" rows="4" placeholder="Any special instructions or notes for your order..."></textarea>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="form-section">
+                    <h2>Order Summary</h2>
+                    <div class="order-summary">
+                        <div class="summary-row">
+                            <span>Services Total:</span>
+                            <span id="servicesTotal">Rp 0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Pickup Fee:</span>
+                            <span id="pickupFee">Rp 0</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span id="orderTotal">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="window.location.href='index.html'">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-lg">Create Order</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Payment Confirmation</h3>
+                <button class="modal-close" id="paymentModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-info">
+                    <h4>Order Total: <span id="paymentTotal"></span></h4>
+                    <p>Please confirm your payment method and mark as paid:</p>
+                </div>
+                <form id="paymentForm">
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <select name="method" required>
+                            <option value="QRIS">QRIS</option>
+                            <option value="TRANSFER">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount Paid</label>
+                        <input type="number" name="amount" id="paymentAmount" required readonly>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="cancelPayment">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Confirm Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/controllers/OrderController.js"></script>
+</body>
+</html>
+
+
+
