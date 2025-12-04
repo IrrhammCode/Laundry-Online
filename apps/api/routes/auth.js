@@ -123,6 +123,44 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
+    // Check hardcoded admin first
+    const ADMIN_EMAIL = 'admin@laundry.com';
+    const ADMIN_PASSWORD = 'admin123';
+    const ADMIN_ID = 1;
+    const ADMIN_NAME = 'Admin User';
+
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      // Generate JWT token for hardcoded admin
+      const token = jwt.sign(
+        { userId: ADMIN_ID, role: 'ADMIN' },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      // Set cookie
+      res.cookie('token', token, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+
+      return res.json({
+        ok: true,
+        data: {
+          user: {
+            id: ADMIN_ID,
+            name: ADMIN_NAME,
+            email: ADMIN_EMAIL,
+            role: 'ADMIN',
+            phone: '081234567890',
+            address: null
+          },
+          token
+        }
+      });
+    }
+
     // Query #4 DPPL: Cari data user berdasarkan email
     // DPPL: SELECT * FROM user WHERE email = ?;
     // Implementasi: Menggunakan users (bukan user) dan hanya mengambil kolom yang diperlukan
@@ -408,6 +446,23 @@ router.get('/me', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Handle hardcoded admin
+    if (decoded.role === 'ADMIN' && decoded.userId === 1) {
+      return res.json({
+        ok: true,
+        data: {
+          user: {
+            id: 1,
+            name: 'Admin User',
+            email: 'admin@laundry.com',
+            role: 'ADMIN',
+            phone: '081234567890',
+            address: null
+          }
+        }
+      });
+    }
     
     // Handle hardcoded admin
     if (decoded.role === 'ADMIN' && decoded.userId === 1) {
