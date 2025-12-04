@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.install]
+cmds = ["cd apps/api && npm install"]
+
+[phases.build]
+cmds = ["cd apps/api && npm install"]
+
+[start]
+cmd = "cd apps/api && node server.js"
+

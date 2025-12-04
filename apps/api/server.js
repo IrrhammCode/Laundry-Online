@@ -16,9 +16,17 @@ const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
 const server = createServer(app);
+// Get frontend URL from environment or use default
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  frontendUrl
+].filter(Boolean);
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
@@ -26,7 +34,7 @@ const io = new Server(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());
@@ -160,12 +168,19 @@ app.use('*', (req, res) => {
   });
 });
 
+// Railway dan Vercel auto-assign PORT
 const PORT = process.env.PORT || 3001;
 
-server.listen(PORT, () => {
-  console.log(`🚀 Laundry API server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-});
+// Export untuk Vercel serverless (jika perlu)
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  // Normal server mode (Railway, local, dll)
+  server.listen(PORT, () => {
+    console.log(`🚀 Laundry API server running on port ${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  });
+}
 
 // Make io available globally for other modules
 global.io = io;
