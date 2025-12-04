@@ -225,7 +225,7 @@
         // Development: Akan pakai localhost dari config.js
         const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         window.VITE_API_URL = isProduction 
-            ? 'https://YOUR-BACKEND-RAILWAY-URL.railway.app/api'  // GANTI INI dengan URL backend Railway
+            ? 'https://laundry-online-production.up.railway.app/api'  // URL backend Railway
             : 'http://localhost:3001/api';
     </script>
     <script type="module" src="js/controllers/AppController.js"></script>
