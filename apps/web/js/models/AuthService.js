@@ -1,8 +1,10 @@
 // AuthService Model - Sesuai DPPL
 // Kelas untuk menangani autentikasi user
+import { getAPIURL } from '../utils/api.js';
+
 export class AuthService {
     constructor() {
-        this.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        this.baseURL = getAPIURL();
     }
 
     /**

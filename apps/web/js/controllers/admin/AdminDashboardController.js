@@ -70,7 +70,7 @@ export class AdminDashboardController {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             
-            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
             const response = await fetch(`${apiURL}/admin/dashboard/stats`, {
                 headers: headers,
                 credentials: 'include'
@@ -94,7 +94,7 @@ export class AdminDashboardController {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             
-            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
             const response = await fetch(`${apiURL}/admin/orders?limit=5`, {
                 headers: headers,
                 credentials: 'include'
@@ -120,7 +120,7 @@ export class AdminDashboardController {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             
-            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
             const response = await fetch(`${apiURL}/admin/orders/${orderId}`, {
                 headers: headers,
                 credentials: 'include'
@@ -154,7 +154,7 @@ export class AdminDashboardController {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             
-            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
             const response = await fetch(`${apiURL}/admin/orders/${orderId}`, {
                 headers: headers,
                 credentials: 'include'
@@ -203,7 +203,7 @@ export class AdminDashboardController {
                 notes: data.notes || ''
             };
             
-            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
             const response = await fetch(`${apiURL}/admin/orders/${this.currentOrderId}/status`, {
                 method: 'PATCH',
                 headers: headers,

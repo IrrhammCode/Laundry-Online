@@ -289,7 +289,7 @@ class App {
     async resetRateLimit() {
         try {
             this.ui.showAlert('Resetting rate limit...', 'info');
-            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
             const response = await fetch(`${apiURL}/reset-rate-limit`, {
                 method: 'POST'
             });

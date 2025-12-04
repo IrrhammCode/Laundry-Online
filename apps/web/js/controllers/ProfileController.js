@@ -109,7 +109,7 @@ export class ProfileController {
 
     async updateProfile(data) {
         try {
-            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
             const response = await fetch(`${apiURL}/auth/profile`, {
                 method: 'PUT',
                 headers: {
