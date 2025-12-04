@@ -32,7 +32,7 @@ export class AdminOrdersController {
                 this.view.showUserNav(admin);
             } else {
                 alert('Access Denied! Admin access required.');
-                this.view.redirect('login.html');
+                this.view.redirect('../../index.html');
             }
         } catch (error) {
             alert('Access Denied! Admin access required.');

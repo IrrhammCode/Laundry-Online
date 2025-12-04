@@ -167,9 +167,16 @@ class App {
                 this.ui.showAlert('Login successful!', 'success');
                 await this.checkAuth();
                 this.ui.resetForm('loginForm');
-                // Redirect to dashboard after successful login
+                
+                // Check if user is admin, redirect accordingly
+                const user = result.data.user;
                 setTimeout(() => {
-                    window.location.href = 'dashboard.html';
+                    if (user.role === 'ADMIN') {
+                        window.location.href = 'admin/dashboard.html';
+                    } else {
+                        // Customer stays on home page or redirect to order page
+                        window.location.href = 'order.html';
+                    }
                 }, 1000);
             } else {
                 this.ui.showAlert(result.error || 'Login failed', 'error');

@@ -30,7 +30,7 @@ export class AdminDashboardController {
                         this.view.showUserNav(user);
                     } else {
                         alert('Access Denied! Admin access required.');
-                        this.view.redirect('login.html');
+                        this.view.redirect('../../index.html');
                     }
                 } else {
                     this.view.redirect('login.html');

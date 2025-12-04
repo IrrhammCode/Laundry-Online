@@ -38,10 +38,10 @@ class AdminServices {
                         this.ui.showUserNav(user);
                     } else {
                         alert('Access Denied! Admin access required.');
-                        window.location.href = 'login.html';
+                        window.location.href = '../index.html';
                     }
                 } else {
-                    window.location.href = 'login.html';
+                    window.location.href = '../index.html';
                 }
             }
         } catch (error) {
@@ -53,7 +53,7 @@ class AdminServices {
                     this.ui.showUserNav(user);
                 } else {
                     alert('Access Denied! Admin access required.');
-                    window.location.href = 'login.html';
+                    window.location.href = '../index.html';
                 }
             } else {
                 window.location.href = 'login.html';
