@@ -13,7 +13,7 @@ export class PembayaranService {
      * 3. Ubah status pesanan jadi "Menunggu Konfirmasi"
      * 4. Kirim notifikasi ke admin
      */
-    async konfirmasiPembayaran(pesananID, metodeBayar, bukti = null) {
+    async konfirmasiPembayaran(pesananID, metodeBayar, bukti = null, amount = null) {
         try {
             // 1. Validasi pesananID
             if (!pesananID) {
@@ -21,6 +21,26 @@ export class PembayaranService {
                     ok: false,
                     error: 'ID pesanan tidak valid'
                 };
+            }
+
+            // Get order detail to get the amount if not provided
+            if (!amount) {
+                const orderResponse = await fetch(`${this.baseURL}/orders/${pesananID}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    credentials: 'include'
+                });
+                
+                if (!orderResponse.ok) {
+                    return {
+                        ok: false,
+                        error: 'Gagal mengambil detail pesanan'
+                    };
+                }
+                
+                const orderData = await orderResponse.json();
+                amount = orderData.data?.order?.price_total || 0;
             }
 
             // 2. Simpan data pembayaran ke tabel pembayaran
@@ -35,7 +55,7 @@ export class PembayaranService {
                 credentials: 'include',
                 body: JSON.stringify({
                     method: metodeBayar,
-                    amount: null, // Akan dihitung di backend
+                    amount: parseFloat(amount), // Use actual order amount
                     proof: bukti
                 })
             });

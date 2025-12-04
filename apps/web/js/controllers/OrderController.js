@@ -220,17 +220,39 @@ export class OrderController {
             const result = await this.pembayaranService.konfirmasiPembayaran(
                 this.currentOrderId,
                 paymentData.method,
-                paymentData.proof || null
+                paymentData.proof || null,
+                paymentData.amount // Pass amount from form
             );
             
             if (result.ok) {
                 this.view.hideLoading();
                 this.view.hidePaymentModal();
-                this.view.showAlert('Order created and payment confirmed successfully!', 'success');
+                
+                // Get order detail for WhatsApp message
+                const orderDetail = await this.orderService.getOrderDetail(this.currentOrderId);
+                const order = orderDetail.data?.order;
+                
+                // Redirect to WhatsApp untuk kirim bukti
+                const whatsappNumber = '6281234567890'; // Ganti dengan nomor WhatsApp admin yang sebenarnya
+                const message = encodeURIComponent(
+                    `Halo Admin, saya sudah melakukan pembayaran untuk order #${this.currentOrderId}.\n\n` +
+                    `Detail Order:\n` +
+                    `- Order ID: ${this.currentOrderId}\n` +
+                    `- Total: Rp ${order?.price_total?.toLocaleString() || '0'}\n` +
+                    `- Metode: ${paymentData.method}\n\n` +
+                    `Saya akan mengirimkan bukti pembayaran melalui chat ini.`
+                );
+                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+                
+                this.view.showAlert('Pembayaran berhasil! Mengarahkan ke WhatsApp untuk kirim bukti...', 'success');
                 
                 setTimeout(() => {
-                    this.view.redirect('history.html');
-                }, 2000);
+                    window.open(whatsappUrl, '_blank');
+                    // Redirect ke history setelah buka WhatsApp
+                    setTimeout(() => {
+                        this.view.redirect('history.html');
+                    }, 1000);
+                }, 1500);
             } else {
                 this.view.hideLoading();
                 this.view.showAlert(result.error || 'Failed to confirm payment', 'error');
