@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd apps/web && npm run build",
+  "buildCommand": "node vercel-build.js",
+  "outputDirectory": "apps/web",
   "rewrites": [
     {
       "source": "/(.*)",
