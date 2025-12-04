@@ -57,7 +57,10 @@ const corsOptions = {
     // Check if origin matches any allowed origin (string or regex)
     const isAllowed = allowedOrigins.some(allowed => {
       if (typeof allowed === 'string') {
-        return allowed === origin;
+        // Remove trailing slash for comparison
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        const normalizedAllowed = allowed.replace(/\/$/, '');
+        return normalizedAllowed === normalizedOrigin;
       } else if (allowed instanceof RegExp) {
         return allowed.test(origin);
       }
