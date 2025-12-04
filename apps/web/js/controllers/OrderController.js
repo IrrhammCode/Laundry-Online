@@ -1,14 +1,18 @@
-// Order Controller - MVC Pattern
+// Order Controller - MVC Pattern (Sesuai DPPL)
 // Handles business logic and coordinates Model and View
-import { AuthService } from '../services/auth.js';
-import { OrderService } from '../services/order.js';
+import { AuthService } from '../models/AuthService.js';
+import { LaundryService } from '../models/LaundryService.js';
+import { PembayaranService } from '../models/PembayaranService.js';
+import { OrderService } from '../services/order.js'; // Untuk getServices
 import { OrderView } from '../views/OrderView.js';
 
 export class OrderController {
     constructor() {
-        // Model layer
+        // Model layer - Sesuai DPPL
         this.authService = new AuthService();
-        this.orderService = new OrderService();
+        this.laundryService = new LaundryService();
+        this.pembayaranService = new PembayaranService();
+        this.orderService = new OrderService(); // Untuk getServices
         
         // View layer
         this.view = new OrderView();
@@ -147,6 +151,7 @@ export class OrderController {
 
     /**
      * Business Logic: Handle order submission
+     * Menggunakan LaundryService.buatPesanan() sesuai Algoritma #1 DPPL
      */
     async handleOrderSubmit(e) {
         e.preventDefault();
@@ -159,20 +164,35 @@ export class OrderController {
         const formData = this.view.getFormData();
         if (!formData) return;
 
-        const orderData = {
-            pickup_method: formData.pickup_method,
-            items: this.selectedItems,
-            notes: formData.notes
-        };
+        // Get current user ID
+        const user = await this.authService.getCurrentUser();
+        if (!user) {
+            this.view.showAlert('Please login first', 'error');
+            return;
+        }
 
         try {
             this.view.showLoading();
-            const result = await this.orderService.createOrder(orderData);
+            
+            // Menggunakan LaundryService.buatPesanan() sesuai DPPL Algoritma #1
+            const result = await this.laundryService.buatPesanan(
+                user.id,
+                this.selectedItems,
+                formData.pickup_method,
+                formData.notes
+            );
             
             if (result.ok) {
                 this.view.hideLoading();
-                this.currentOrderId = result.data.order.id;
-                this.view.showPaymentModal(result.data.order);
+                this.currentOrderId = result.data.orderId;
+                
+                // Get order detail untuk payment modal
+                const orderDetail = await this.orderService.getOrderDetail(result.data.orderId);
+                if (orderDetail.ok) {
+                    this.view.showPaymentModal(orderDetail.data.order);
+                } else {
+                    this.view.showAlert('Order created but failed to load details', 'error');
+                }
             } else {
                 this.view.hideLoading();
                 this.view.showAlert(result.error || 'Failed to create order', 'error');
@@ -185,6 +205,7 @@ export class OrderController {
 
     /**
      * Business Logic: Handle payment submission
+     * Menggunakan PembayaranService.konfirmasiPembayaran() sesuai Algoritma #7 DPPL
      */
     async handlePaymentSubmit(e) {
         e.preventDefault();
@@ -194,7 +215,13 @@ export class OrderController {
 
         try {
             this.view.showLoading();
-            const result = await this.orderService.confirmPayment(this.currentOrderId, paymentData);
+            
+            // Menggunakan PembayaranService.konfirmasiPembayaran() sesuai DPPL Algoritma #7
+            const result = await this.pembayaranService.konfirmasiPembayaran(
+                this.currentOrderId,
+                paymentData.method,
+                paymentData.proof || null
+            );
             
             if (result.ok) {
                 this.view.hideLoading();
@@ -238,6 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make globally available for onclick handlers
     window.orderController = orderController;
 });
+
+
+
 
 
 

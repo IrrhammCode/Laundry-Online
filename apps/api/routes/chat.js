@@ -79,7 +79,8 @@ router.post('/orders/:orderId/messages', [
       });
     }
 
-    // Save message
+    // Save message (untuk chat support)
+    // Catatan: Query ini untuk chat, bukan notifikasi sesuai Query #18 DPPL
     const [result] = await db.execute(
       'INSERT INTO messages (order_id, sender_id, body) VALUES (?, ?, ?)',
       [orderId, userId, message]

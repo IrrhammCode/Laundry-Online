@@ -18,15 +18,11 @@
             <div class="nav-menu" id="navMenu">
                 <a href="#home" class="nav-link active">Home</a>
                 <a href="#services" class="nav-link">Services</a>
-                <a href="#demo" class="nav-link">Demo</a>
                 <a href="#about" class="nav-link">About</a>
                 <a href="#contact" class="nav-link">Contact</a>
                 <div class="nav-auth" id="navAuth">
                     <button class="btn btn-outline" id="loginBtn">Login</button>
                     <button class="btn btn-primary" id="registerBtn">Register</button>
-                    <a href="demo-login.html" class="btn btn-success">
-                        <i class="fas fa-users"></i> Demo Login
-                    </a>
                 </div>
                 <div class="nav-user" id="navUser" style="display: none;">
                     <span id="userName"></span>
@@ -49,9 +45,6 @@
             <div class="hero-actions">
                 <button class="btn btn-primary btn-lg" id="orderNowBtn">Order Now</button>
                 <button class="btn btn-outline btn-lg" id="learnMoreBtn">Learn More</button>
-                <a href="demo-login.html" class="btn btn-success btn-lg">
-                    <i class="fas fa-users"></i> Demo Login
-                </a>
             </div>
         </div>
         <div class="hero-image">
@@ -65,36 +58,6 @@
             <h2 class="section-title">Our Services</h2>
             <div class="services-grid" id="servicesGrid">
                 <!-- Services will be loaded dynamically -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Demo Section -->
-    <section id="demo" class="demo-section">
-        <div class="container">
-            <h2 class="section-title">Try Our System</h2>
-            <p class="demo-subtitle">Test the complete laundry management system with demo accounts</p>
-            <div class="demo-actions">
-                <a href="demo-full.html" class="btn btn-success btn-lg">
-                    <i class="fas fa-rocket"></i> Full Demo
-                </a>
-                <a href="demo-complete.html" class="btn btn-outline btn-lg">
-                    <i class="fas fa-users"></i> API Demo
-                </a>
-            </div>
-            <div class="demo-accounts-preview">
-                <div class="demo-account">
-                    <i class="fas fa-user"></i>
-                    <span>Customer Demo</span>
-                </div>
-                <div class="demo-account">
-                    <i class="fas fa-user-shield"></i>
-                    <span>Admin Demo</span>
-                </div>
-                <div class="demo-account">
-                    <i class="fas fa-truck"></i>
-                    <span>Courier Demo</span>
-                </div>
             </div>
         </div>
     </section>
@@ -198,7 +161,8 @@
                 </div>
                 <div class="form-group">
                     <label for="registerPhone">Phone (Optional)</label>
-                    <input type="tel" id="registerPhone" name="phone">
+                    <input type="tel" id="registerPhone" name="phone" pattern="[0-9]*" inputmode="numeric" placeholder="08xxxxxxxxxx" maxlength="13">
+                    <small class="form-text">Format: 08xxxxxxxxxx (10-13 digit, hanya angka)</small>
                 </div>
                 <div class="form-group">
                     <label for="registerAddress">Address (Optional)</label>

@@ -1,10 +1,10 @@
-// Profile Controller - MVC Pattern
-import { AuthService } from '../services/auth.js';
+// Profile Controller - MVC Pattern (Sesuai DPPL)
+import { AuthService } from '../models/AuthService.js';
 import { ProfileView } from '../views/ProfileView.js';
 
 export class ProfileController {
     constructor() {
-        // Model layer
+        // Model layer - Sesuai DPPL
         this.authService = new AuthService();
         
         // View layer
@@ -29,22 +29,10 @@ export class ProfileController {
                 this.currentUser = user;
                 this.view.showUserNav(user);
             } else {
-                const userInfo = localStorage.getItem('userInfo');
-                if (userInfo) {
-                    this.currentUser = JSON.parse(userInfo);
-                    this.view.showUserNav(this.currentUser);
-                } else {
-                    this.view.redirect('index.html');
-                }
-            }
-        } catch (error) {
-            const userInfo = localStorage.getItem('userInfo');
-            if (userInfo) {
-                this.currentUser = JSON.parse(userInfo);
-                this.view.showUserNav(this.currentUser);
-            } else {
                 this.view.redirect('index.html');
             }
+        } catch (error) {
+            this.view.redirect('index.html');
         }
     }
 
@@ -163,6 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
     profileController = new ProfileController();
     window.profileController = profileController;
 });
+
+
+
 
 
 

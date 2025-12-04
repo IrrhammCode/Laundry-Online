@@ -1,12 +1,15 @@
-// Admin Orders Controller - MVC Pattern
-import { AuthService } from '../../services/auth.js';
-import { OrderService } from '../../services/order.js';
+// Admin Orders Controller - MVC Pattern (Sesuai DPPL)
+import { AdminAuthService } from '../../models/AdminAuthService.js';
+import { AdminPesananService } from '../../models/AdminPesananService.js';
+import { StatusLaundry } from '../../models/StatusLaundry.js';
 import { AdminOrdersView } from '../../views/admin/AdminOrdersView.js';
 
 export class AdminOrdersController {
     constructor() {
-        this.authService = new AuthService();
-        this.orderService = new OrderService();
+        // Model layer - Sesuai DPPL
+        this.adminAuthService = new AdminAuthService();
+        this.adminPesananService = new AdminPesananService();
+        this.statusLaundry = new StatusLaundry();
         this.view = new AdminOrdersView();
         
         this.currentPage = 1;
@@ -24,66 +27,38 @@ export class AdminOrdersController {
 
     async checkAuth() {
         try {
-            const user = await this.authService.getCurrentUser();
-            if (user && user.role === 'ADMIN') {
-                this.view.showUserNav(user);
+            const admin = this.adminAuthService.getCurrentAdmin();
+            if (admin && admin.role === 'ADMIN') {
+                this.view.showUserNav(admin);
             } else {
-                const userInfo = localStorage.getItem('userInfo');
-                if (userInfo) {
-                    const user = JSON.parse(userInfo);
-                    if (user.role === 'ADMIN') {
-                        this.view.showUserNav(user);
-                    } else {
-                        alert('Access Denied! Admin access required.');
-                        this.view.redirect('login.html');
-                    }
-                } else {
-                    this.view.redirect('login.html');
-                }
-            }
-        } catch (error) {
-            const userInfo = localStorage.getItem('userInfo');
-            if (userInfo) {
-                const user = JSON.parse(userInfo);
-                if (user.role === 'ADMIN') {
-                    this.view.showUserNav(user);
-                } else {
-                    alert('Access Denied! Admin access required.');
-                    this.view.redirect('login.html');
-                }
-            } else {
+                alert('Access Denied! Admin access required.');
                 this.view.redirect('login.html');
             }
+        } catch (error) {
+            alert('Access Denied! Admin access required.');
+            this.view.redirect('login.html');
         }
     }
 
+    /**
+     * Load orders menggunakan AdminPesananService.lihatSemuaPesanan() sesuai Algoritma #13 DPPL
+     */
     async loadOrders() {
         try {
             this.view.showLoading();
             
-            const authToken = localStorage.getItem('authToken');
-            let headers = {};
-            
-            if (authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-            }
-            
-            const response = await fetch(`http://localhost:3001/api/admin/orders?page=${this.currentPage}&limit=10&status=${this.currentStatus}&search=${this.currentSearch}`, {
-                headers: headers,
-                credentials: 'include'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch orders');
-            }
-            
-            const result = await response.json();
+            // Menggunakan AdminPesananService.lihatSemuaPesanan() sesuai DPPL Algoritma #13
+            const result = await this.adminPesananService.lihatSemuaPesanan(
+                this.currentPage,
+                10,
+                this.currentStatus
+            );
             
             if (result.ok) {
                 this.view.renderOrders(result.data.orders);
                 this.view.updatePagination(result.data.pagination);
             } else {
-                throw new Error(result.error);
+                this.view.showAlert(result.error || 'Failed to load orders', 'error');
             }
         } catch (error) {
             this.view.showAlert('Failed to load orders', 'error');
@@ -92,30 +67,16 @@ export class AdminOrdersController {
         }
     }
 
+    /**
+     * Update status menggunakan AdminPesananService.ubahStatusPesanan() sesuai Algoritma #15 DPPL
+     * atau StatusLaundry.updateStatus()
+     */
     async updateStatus(orderId, newStatus) {
         try {
-            const authToken = localStorage.getItem('authToken');
-            let headers = {
-                'Content-Type': 'application/json',
-            };
+            this.view.showLoading();
             
-            if (authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-            }
-            
-            const response = await fetch(`http://localhost:3001/api/admin/orders/${orderId}/status`, {
-                method: 'PATCH',
-                headers: headers,
-                credentials: 'include',
-                body: JSON.stringify({ status: newStatus })
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-            }
-            
-            const result = await response.json();
+            // Menggunakan AdminPesananService.ubahStatusPesanan() sesuai DPPL Algoritma #15
+            const result = await this.adminPesananService.ubahStatusPesanan(orderId, newStatus);
             
             if (result.ok) {
                 this.view.showAlert('Order status updated successfully', 'success');
@@ -125,28 +86,20 @@ export class AdminOrdersController {
             }
         } catch (error) {
             this.view.showAlert('Failed to update order status', 'error');
+        } finally {
+            this.view.hideLoading();
         }
     }
 
+    /**
+     * View order detail menggunakan AdminPesananService.getDetailPesanan()
+     */
     async viewOrder(orderId) {
         try {
-            const authToken = localStorage.getItem('authToken');
-            let headers = {};
+            this.view.showLoading();
             
-            if (authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-            }
-            
-            const response = await fetch(`http://localhost:3001/api/admin/orders/${orderId}`, {
-                headers: headers,
-                credentials: 'include'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch order details');
-            }
-            
-            const result = await response.json();
+            // Menggunakan AdminPesananService.getDetailPesanan()
+            const result = await this.adminPesananService.getDetailPesanan(orderId);
             
             if (result.ok) {
                 this.view.showOrderDetailModal(result.data.order);
@@ -155,6 +108,8 @@ export class AdminOrdersController {
             }
         } catch (error) {
             this.view.showAlert('Failed to load order details', 'error');
+        } finally {
+            this.view.hideLoading();
         }
     }
 
@@ -186,6 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
     adminOrdersController = new AdminOrdersController();
     window.adminOrdersController = adminOrdersController;
 });
+
+
+
 
 
 

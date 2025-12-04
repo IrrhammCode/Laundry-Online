@@ -2,14 +2,14 @@
 
 # Laundry & Dry Clean Management System
 
-A comprehensive web application for managing laundry and dry cleaning services with customer, admin, and courier interfaces.
+A comprehensive web application for managing laundry and dry cleaning services with customer and admin interfaces.
 
 ## Features
 
 ### Customer Features
 - **User Registration & Authentication** - Secure user registration and login
 - **Order Management** - Create, track, and manage laundry orders
-- **Real-time Chat** - Chat with courier and admin support
+- **Real-time Chat** - Chat with admin support
 - **Order History** - View past orders and their status
 - **Profile Management** - Update personal information
 - **Payment Integration** - QRIS and bank transfer payment options
@@ -20,11 +20,6 @@ A comprehensive web application for managing laundry and dry cleaning services w
 - **Service Management** - Add, edit, and delete laundry services
 - **Customer Support** - Chat with customers about their orders
 - **Analytics** - Revenue and order statistics
-
-### Courier Features
-- **Delivery Management** - Track pickup and delivery status
-- **Order Updates** - Update delivery status and add notes
-- **Customer Communication** - Chat with customers about deliveries
 
 ## Tech Stack
 
@@ -138,7 +133,6 @@ npm run dev
 **Access URLs:**
 - **Frontend**: http://localhost:3000
 - **API**: http://localhost:3001
-- **Demo Login**: http://localhost:3000/demo-login.html
 - **Admin Login**: http://localhost:3000/admin/login.html
 
 ## Demo Accounts
@@ -154,11 +148,6 @@ After running the migration, you'll have these demo accounts for testing:
 - **Email**: admin@laundry.com
 - **Password**: admin123
 - **Features**: Manage orders, update status, service management
-
-### Courier Account
-- **Email**: courier@laundry.com
-- **Password**: courier123
-- **Features**: Pickup/delivery management, status updates
 
 ## API Endpoints
 
@@ -187,13 +176,6 @@ After running the migration, you'll have these demo accounts for testing:
 - `PUT /api/admin/services/:id` - Update service
 - `DELETE /api/admin/services/:id` - Delete service
 - `GET /api/admin/dashboard/stats` - Get dashboard statistics
-
-### Courier
-- `GET /api/courier/orders` - Get courier orders
-- `GET /api/courier/orders/:id` - Get order details
-- `POST /api/courier/orders/:id/pickup` - Mark as picked up
-- `POST /api/courier/orders/:id/deliver` - Mark as delivered
-- `POST /api/courier/orders/:id/delivery-status` - Update delivery status
 
 ### Chat & Notifications
 - `GET /api/chat/orders/:orderId/messages` - Get chat messages
@@ -226,14 +208,13 @@ laundry-dry-clean/
 ## Database Schema
 
 ### Tables
-- **users** - User accounts (customers, admins, couriers)
+- **users** - User accounts (customers, admins)
 - **services** - Available laundry services
 - **orders** - Customer orders
 - **order_items** - Items within each order
 - **payments** - Payment records
 - **messages** - Chat messages
 - **notifications** - System notifications
-- **courier_updates** - Delivery status updates
 
 ## Features Implementation
 

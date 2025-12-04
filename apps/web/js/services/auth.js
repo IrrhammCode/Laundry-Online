@@ -57,13 +57,22 @@ export class AuthService {
 
     async register(userData) {
         try {
+            // Clean up empty optional fields
+            const cleanedData = {
+                name: userData.name?.trim(),
+                email: userData.email?.trim(),
+                password: userData.password,
+                phone: userData.phone?.trim() || null,
+                address: userData.address?.trim() || null
+            };
+
             const response = await fetch(`${this.baseURL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify(userData)
+                body: JSON.stringify(cleanedData)
             });
 
             // Handle rate limiting
@@ -80,6 +89,30 @@ export class AuthService {
             }
 
             const result = await response.json();
+            
+            // Handle different error statuses
+            if (!result.ok) {
+                let errorMessage;
+                if (response.status === 409) {
+                    // Email already registered
+                    errorMessage = result.message || result.error || 'Email sudah terdaftar. Silakan gunakan email lain atau login.';
+                    console.error('Registration failed - Email already exists:', errorMessage);
+                } else if (response.status === 400) {
+                    // Validation failed
+                    errorMessage = result.message || result.error || 'Validation failed';
+                    console.error('Registration failed - Validation error:', errorMessage);
+                } else {
+                    // Other errors
+                    errorMessage = result.message || result.error || 'Registration failed';
+                    console.error('Registration failed - Other error:', errorMessage);
+                }
+                // Create error object with message
+                const error = new Error(errorMessage);
+                error.status = response.status;
+                error.result = result;
+                throw error;
+            }
+            
             return result;
         } catch (error) {
             console.error('Registration error:', error);

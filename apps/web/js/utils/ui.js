@@ -68,6 +68,8 @@ export class UI {
     }
 
     showAlert(message, type = 'info') {
+        console.log(`[UI] Showing alert: ${type} - ${message}`);
+        
         // Remove existing alerts
         const existingAlerts = document.querySelectorAll('.alert');
         existingAlerts.forEach(alert => alert.remove());
@@ -76,6 +78,7 @@ export class UI {
         const alert = document.createElement('div');
         alert.className = `alert alert-${type}`;
         alert.textContent = message;
+        alert.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; padding: 1rem 2rem; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 300px; max-width: 90%; text-align: center;';
 
         // Insert at the top of the page
         const header = document.querySelector('.header');
@@ -227,19 +230,6 @@ export class UI {
                     </div>
                 ` : ''}
 
-                ${order.courier_updates && order.courier_updates.length > 0 ? `
-                    <div class="courier-updates">
-                        <h3>Delivery Updates</h3>
-                        ${order.courier_updates.map(update => `
-                            <div class="update-item">
-                                <p><strong>Status:</strong> ${update.delivery_status}</p>
-                                <p><strong>Courier:</strong> ${update.courier_name}</p>
-                                <p><strong>Date:</strong> ${new Date(update.created_at).toLocaleString()}</p>
-                                ${update.notes ? `<p><strong>Notes:</strong> ${update.notes}</p>` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
             </div>
         `;
     }

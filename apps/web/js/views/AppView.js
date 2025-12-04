@@ -222,6 +222,29 @@ export class AppView {
             registerForm.addEventListener('submit', callbacks.onRegister);
         }
 
+        // Validasi real-time untuk input phone (hanya angka)
+        const phoneInput = document.getElementById('registerPhone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', (e) => {
+                // Hapus semua karakter non-angka
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+
+            phoneInput.addEventListener('blur', (e) => {
+                const phone = e.target.value.trim();
+                if (phone && phone !== '') {
+                    // Validasi format nomor Indonesia
+                    if (!/^08\d{8,11}$/.test(phone)) {
+                        e.target.setCustomValidity('Format: 08xxxxxxxxxx (10-13 digit)');
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                } else {
+                    e.target.setCustomValidity('');
+                }
+            });
+        }
+
         const forgotPasswordForm = document.getElementById('forgotPasswordForm');
         if (forgotPasswordForm && callbacks.onForgotPassword) {
             forgotPasswordForm.addEventListener('submit', callbacks.onForgotPassword);
@@ -267,6 +290,9 @@ export class AppView {
         });
     }
 }
+
+
+
 
 
 

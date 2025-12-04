@@ -93,10 +93,12 @@ router.post('/', [
         );
       }
 
-      // Create initial payment record
+      // Query #8 DPPL: Insert Pembayaran
+      // DPPL: INSERT INTO pembayaran (pesanan_id, metode, bukti_transfer, status) VALUES (?, ?, ?, 'Menunggu Verifikasi');
+      // Implementasi: Menggunakan tabel payments dengan struktur yang disesuaikan
       await connection.execute(
         'INSERT INTO payments (order_id, method, amount, status) VALUES (?, ?, ?, ?)',
-        [orderId, 'QRIS', totalPrice, 'PENDING']
+        [orderId, 'QRIS', totalPrice, 'PENDING'] // Status PENDING setara dengan 'Menunggu Verifikasi'
       );
 
       await connection.commit();
@@ -147,12 +149,14 @@ router.post('/', [
 });
 
 // FR-04: Get User Orders
+// Query #2 & #10 DPPL: SELECT * FROM pesanan WHERE user_id = ? ORDER BY tanggal_pesan DESC;
 router.get('/me', async (req, res) => {
   try {
     const userId = req.user.id;
     const { page = 1, limit = 10, status } = req.query;
     const offset = (page - 1) * limit;
 
+    // Query #2 & #10 DPPL - Sesuai dengan DPPL, ditambahkan pagination dan JOIN untuk item_count
     let query = `
       SELECT 
         o.id, o.pickup_method, o.status, o.price_total, o.created_at,
@@ -169,6 +173,7 @@ router.get('/me', async (req, res) => {
       params.push(status);
     }
 
+    // ORDER BY created_at DESC sesuai DPPL (tanggal_pesan DESC)
     query += ' GROUP BY o.id ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
@@ -247,25 +252,13 @@ router.get('/:id', async (req, res) => {
       [orderId]
     );
 
-    // Get courier updates
-    const [courierUpdates] = await db.execute(`
-      SELECT 
-        cu.id, cu.delivery_status, cu.notes, cu.created_at,
-        u.name as courier_name
-      FROM courier_updates cu
-      JOIN users u ON cu.courier_id = u.id
-      WHERE cu.order_id = ?
-      ORDER BY cu.created_at DESC
-    `, [orderId]);
-
     res.json({
       ok: true,
       data: {
         order: {
           ...orders[0],
           items: orderItems,
-          payments,
-          courier_updates: courierUpdates
+          payments
         }
       }
     });
@@ -321,7 +314,8 @@ router.post('/:orderId/payment/confirm', [
       });
     }
 
-    // Update payment status
+    // Query #8 DPPL: Update Pembayaran setelah konfirmasi
+    // Mengubah status dari 'PENDING' (Menunggu Verifikasi) menjadi 'PAID' (Terbayar)
     await db.execute(
       'UPDATE payments SET method = ?, amount = ?, status = "PAID", paid_at = NOW() WHERE order_id = ?',
       [method, amount, orderId]

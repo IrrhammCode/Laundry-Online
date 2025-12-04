@@ -12,8 +12,7 @@
  */
 const UserRole = {
   CUSTOMER: 'CUSTOMER',
-  ADMIN: 'ADMIN',
-  COURIER: 'COURIER'
+  ADMIN: 'ADMIN'
 };
 
 /**
@@ -45,7 +44,7 @@ const OrderStatus = {
  * Database Schema:
  * CREATE TABLE users (
  *   id INT PRIMARY KEY AUTO_INCREMENT,
- *   role ENUM('CUSTOMER', 'ADMIN', 'COURIER') NOT NULL DEFAULT 'CUSTOMER',
+ *   role ENUM('CUSTOMER', 'ADMIN') NOT NULL DEFAULT 'CUSTOMER',
  *   name VARCHAR(255) NOT NULL,
  *   email VARCHAR(255) UNIQUE NOT NULL,
  *   password_hash VARCHAR(255) NOT NULL,
@@ -57,7 +56,7 @@ const OrderStatus = {
  */
 const User = {
   id: null,                    // INT PRIMARY KEY AUTO_INCREMENT
-  role: UserRole.CUSTOMER,     // ENUM('CUSTOMER', 'ADMIN', 'COURIER')
+  role: UserRole.CUSTOMER,     // ENUM('CUSTOMER', 'ADMIN')
   name: '',                     // VARCHAR(255) NOT NULL
   email: '',                    // VARCHAR(255) UNIQUE NOT NULL
   password_hash: '',            // VARCHAR(255) NOT NULL
@@ -192,6 +191,9 @@ if (typeof window !== 'undefined') {
   window.OrderItem = OrderItem;
   window.Service = Service;
 }
+
+
+
 
 
 

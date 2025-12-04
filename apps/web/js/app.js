@@ -76,6 +76,29 @@ class App {
             this.handleRegister(e);
         });
 
+        // Validasi real-time untuk input phone (hanya angka)
+        const phoneInput = document.getElementById('registerPhone');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', (e) => {
+                // Hapus semua karakter non-angka
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+
+            phoneInput.addEventListener('blur', (e) => {
+                const phone = e.target.value.trim();
+                if (phone && phone !== '') {
+                    // Validasi format nomor Indonesia
+                    if (!/^08\d{8,11}$/.test(phone)) {
+                        e.target.setCustomValidity('Format: 08xxxxxxxxxx (10-13 digit)');
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                } else {
+                    e.target.setCustomValidity('');
+                }
+            });
+        }
+
         document.getElementById('forgotPasswordForm')?.addEventListener('submit', (e) => {
             this.handleForgotPassword(e);
         });
@@ -164,6 +187,21 @@ class App {
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData);
 
+        // Validasi nomor telepon jika diisi
+        if (data.phone && data.phone.trim() !== '') {
+            // Hapus semua karakter non-angka
+            const phoneDigits = data.phone.replace(/\D/g, '');
+            
+            // Validasi format nomor Indonesia (08xxxxxxxxxx, 10-13 digit)
+            if (!/^08\d{8,11}$/.test(phoneDigits)) {
+                this.ui.showAlert('Nomor telepon tidak valid. Format: 08xxxxxxxxxx (10-13 digit, hanya angka)', 'error');
+                return;
+            }
+            
+            // Update data dengan nomor yang sudah dibersihkan
+            data.phone = phoneDigits;
+        }
+
         // Debug: log the data being sent
         console.log('Registration data:', data);
 
@@ -186,11 +224,22 @@ class App {
                 }, 1000);
             } else {
                 console.error('Registration failed:', result);
-                this.ui.showAlert(result.error || 'Registration failed', 'error');
+                const errorMsg = result.message || result.error || 'Registration failed';
+                this.ui.showAlert(errorMsg, 'error');
             }
         } catch (error) {
             console.error('Registration error:', error);
-            this.ui.showAlert('Registration failed. Please try again.', 'error');
+            // Display the actual error message from the server
+            let errorMsg = 'Registration failed. Please check your input and try again.';
+            
+            if (error.message) {
+                errorMsg = error.message;
+            } else if (error.result) {
+                errorMsg = error.result.message || error.result.error || errorMsg;
+            }
+            
+            console.log('Displaying error message:', errorMsg);
+            this.ui.showAlert(errorMsg, 'error');
         } finally {
             this.ui.hideLoading();
         }

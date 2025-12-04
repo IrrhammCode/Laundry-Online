@@ -35,7 +35,7 @@ const createTables = async () => {
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT PRIMARY KEY AUTO_INCREMENT,
-        role ENUM('CUSTOMER', 'ADMIN', 'COURIER') NOT NULL DEFAULT 'CUSTOMER',
+        role ENUM('CUSTOMER', 'ADMIN') NOT NULL DEFAULT 'CUSTOMER',
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
@@ -132,19 +132,6 @@ const createTables = async () => {
       )
     `);
 
-    // Courier updates table
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS courier_updates (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        order_id INT NOT NULL,
-        courier_id INT NOT NULL,
-        delivery_status ENUM('PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED') NOT NULL,
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-        FOREIGN KEY (courier_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `);
 
     console.log('✅ All tables created successfully!');
 
@@ -170,14 +157,6 @@ const insertSeedData = async (connection) => {
       INSERT IGNORE INTO users (role, name, email, password_hash, phone) 
       VALUES ('ADMIN', 'Admin User', 'admin@laundry.com', ?, '081234567890')
     `, [adminPassword]);
-
-    // Insert courier user
-    const courierPassword = await bcrypt.hash('courier123', 10);
-    
-    await connection.execute(`
-      INSERT IGNORE INTO users (role, name, email, password_hash, phone) 
-      VALUES ('COURIER', 'Courier User', 'courier@laundry.com', ?, '081234567891')
-    `, [courierPassword]);
 
     // Insert demo customer user
     const customerPassword = await bcrypt.hash('demo123', 10);

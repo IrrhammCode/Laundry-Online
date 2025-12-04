@@ -54,7 +54,8 @@ router.get('/orders', async (req, res) => {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
+    // Sesuai DPPL Query #14: ORDER BY status, tanggal_pesan ASC
+    query += ' ORDER BY o.status ASC, o.created_at ASC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [orders] = await db.execute(query, params);
@@ -135,17 +136,6 @@ router.get('/orders/:id', async (req, res) => {
       [orderId]
     );
 
-    // Get courier updates
-    const [courierUpdates] = await db.execute(`
-      SELECT 
-        cu.id, cu.delivery_status, cu.notes, cu.created_at,
-        u.name as courier_name
-      FROM courier_updates cu
-      JOIN users u ON cu.courier_id = u.id
-      WHERE cu.order_id = ?
-      ORDER BY cu.created_at DESC
-    `, [orderId]);
-
     // Get chat messages
     const [messages] = await db.execute(`
       SELECT 
@@ -164,7 +154,6 @@ router.get('/orders/:id', async (req, res) => {
           ...orders[0],
           items: orderItems,
           payments,
-          courier_updates: courierUpdates,
           messages
         }
       }
@@ -228,16 +217,20 @@ router.patch('/orders/:id/status', [
       });
     }
 
-    // Update order status
+    // Query #16 DPPL: Memperbarui status pesanan
+    // DPPL: UPDATE pesanan SET status = ? WHERE id = ?;
+    // Implementasi: Menambahkan updated_at untuk tracking perubahan
     await db.execute(
       'UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?',
       [status, orderId]
     );
 
-    // Create notification
+    // Query #18 DPPL: Menyimpan dan mengirimkan notifikasi ke user
+    // DPPL: INSERT INTO notifikasi (user_id, isi_pesan, waktu) VALUES (?, ?, CURRENT_TIMESTAMP);
+    // Implementasi: Menggunakan struktur notifications yang lebih lengkap dengan order_id, type, payload_json, channel
     await db.execute(
       'INSERT INTO notifications (order_id, user_id, type, payload_json, channel) VALUES (?, ?, ?, ?, ?)',
-      [orderId, order.user_id, 'status_update', JSON.stringify({ status, notes }), 'EMAIL']
+      [orderId, order.user_id, 'status_update', JSON.stringify({ status, notes, isi_pesan: `Status order berubah menjadi ${status}` }), 'EMAIL']
     );
 
     // Send email notification

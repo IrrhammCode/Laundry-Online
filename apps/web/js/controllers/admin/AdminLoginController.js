@@ -1,10 +1,11 @@
-// Admin Login Controller - MVC Pattern
-import { AuthService } from '../../services/auth.js';
+// Admin Login Controller - MVC Pattern (Sesuai DPPL)
+import { AdminAuthService } from '../../models/AdminAuthService.js';
 import { AdminLoginView } from '../../views/admin/AdminLoginView.js';
 
 export class AdminLoginController {
     constructor() {
-        this.authService = new AuthService();
+        // Model layer - Sesuai DPPL
+        this.adminAuthService = new AdminAuthService();
         this.view = new AdminLoginView();
         this.init();
     }
@@ -16,8 +17,8 @@ export class AdminLoginController {
 
     async checkAuth() {
         try {
-            const user = await this.authService.getCurrentUser();
-            if (user && user.role === 'ADMIN') {
+            const admin = this.adminAuthService.getCurrentAdmin();
+            if (admin && admin.role === 'ADMIN') {
                 this.view.redirect('dashboard.html');
             }
         } catch (error) {
@@ -25,6 +26,9 @@ export class AdminLoginController {
         }
     }
 
+    /**
+     * Handle login menggunakan AdminAuthService.loginAdmin() sesuai Algoritma #11 DPPL
+     */
     async handleLogin(e) {
         e.preventDefault();
         
@@ -33,18 +37,20 @@ export class AdminLoginController {
 
         try {
             this.view.showLoading();
-            const result = await this.authService.login(data.email, data.password);
+            
+            // Menggunakan AdminAuthService.loginAdmin() sesuai DPPL Algoritma #11
+            const result = await this.adminAuthService.loginAdmin(data.email, data.password);
             
             if (result.ok) {
-                const user = await this.authService.getCurrentUser();
-                if (user.role === 'ADMIN') {
+                const admin = this.adminAuthService.getCurrentAdmin();
+                if (admin && admin.role === 'ADMIN') {
                     this.view.hideLoading();
                     this.view.showAlert('Login successful!', 'success');
                     this.view.redirect('dashboard.html');
                 } else {
                     this.view.hideLoading();
                     this.view.showAlert('Access denied. Admin privileges required.', 'error');
-                    await this.authService.logout();
+                    await this.adminAuthService.logout();
                 }
             } else {
                 this.view.hideLoading();
@@ -69,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
     adminLoginController = new AdminLoginController();
     window.adminLoginController = adminLoginController;
 });
+
+
+
 
 
 

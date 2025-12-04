@@ -16,8 +16,7 @@
  */
 const UserRole = {
   CUSTOMER: 'CUSTOMER',
-  ADMIN: 'ADMIN',
-  COURIER: 'COURIER'
+  ADMIN: 'ADMIN'
 };
 
 
@@ -105,7 +104,6 @@ const OrderStatus = {
  * - order_items: Items dalam order ini
  * - payments: Payment records untuk order ini
  * - messages: Chat messages untuk order ini
- * - courier_updates: Delivery updates dari courier
  */
 class Order {
   constructor(data = {}) {
@@ -128,7 +126,6 @@ class Order {
     this.items = data.items || [];
     this.payments = data.payments || [];
     this.messages = data.messages || [];
-    this.courier_updates = data.courier_updates || [];
   }
 
   /**
@@ -323,6 +320,9 @@ if (typeof window !== 'undefined') {
   window.OrderItem = OrderItem;
   window.Service = Service;
 }
+
+
+
 
 
 

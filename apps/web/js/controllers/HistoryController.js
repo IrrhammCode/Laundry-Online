@@ -1,15 +1,15 @@
-// History Controller - MVC Pattern
+// History Controller - MVC Pattern (Sesuai DPPL)
 // Handles business logic and coordinates Model and View
-import { AuthService } from '../services/auth.js';
-import { OrderService } from '../services/order.js';
+import { AuthService } from '../models/AuthService.js';
+import { RiwayatService } from '../models/RiwayatService.js';
 import { ChatService } from '../services/chat.js';
 import { HistoryView } from '../views/HistoryView.js';
 
 export class HistoryController {
     constructor() {
-        // Model layer
+        // Model layer - Sesuai DPPL
         this.authService = new AuthService();
-        this.orderService = new OrderService();
+        this.riwayatService = new RiwayatService();
         this.chatService = new ChatService();
         
         // View layer
@@ -52,13 +52,25 @@ export class HistoryController {
         }
     }
 
+    /**
+     * Load orders menggunakan RiwayatService.lihatRiwayat() sesuai Algoritma #9 DPPL
+     */
     async loadOrders(page = 1, status = '') {
         try {
             this.currentPage = page;
             this.currentStatus = status;
             
+            // Get current user
+            const user = this.authService.getCurrentUser();
+            if (!user) {
+                this.view.redirect('index.html');
+                return;
+            }
+            
             this.view.showLoading();
-            const result = await this.orderService.getUserOrders(page, 10, status);
+            
+            // Menggunakan RiwayatService.lihatRiwayat() sesuai DPPL Algoritma #9
+            const result = await this.riwayatService.lihatRiwayat(user.id, page, 10, status);
             
             if (result.ok) {
                 this.view.renderOrders(result.data.orders);
@@ -73,10 +85,15 @@ export class HistoryController {
         }
     }
 
+    /**
+     * Load order detail menggunakan RiwayatService.getDetailPesanan()
+     */
     async loadOrderDetail(orderId) {
         try {
             this.view.showLoading();
-            const result = await this.orderService.getOrderDetail(orderId);
+            
+            // Menggunakan RiwayatService.getDetailPesanan()
+            const result = await this.riwayatService.getDetailPesanan(orderId);
             
             if (result.ok) {
                 this.view.showOrderDetailModal(result.data.order);
@@ -192,6 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.viewOrder = (orderId) => historyController.loadOrderDetail(orderId);
     window.openChat = (orderId) => historyController.openChat(orderId);
 });
+
+
+
 
 
 

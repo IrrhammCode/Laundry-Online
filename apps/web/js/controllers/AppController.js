@@ -1,13 +1,15 @@
-// App Controller - MVC Pattern
-import { AuthService } from '../services/auth.js';
+// App Controller - MVC Pattern (Sesuai DPPL)
+import { AuthService } from '../models/AuthService.js';
+import { UserService } from '../models/UserService.js';
 import { OrderService } from '../services/order.js';
 import { ChatService } from '../services/chat.js';
 import { AppView } from '../views/AppView.js';
 
 export class AppController {
     constructor() {
-        // Model layer
+        // Model layer - Sesuai DPPL
         this.authService = new AuthService();
+        this.userService = new UserService();
         this.orderService = new OrderService();
         this.chatService = new ChatService();
         
@@ -47,52 +49,122 @@ export class AppController {
         }
     }
 
+    /**
+     * Handle login menggunakan AuthService.loginUser() sesuai Algoritma #3 DPPL
+     * 
+     * Alur function:
+     * 1. Cegah reload halaman saat form submit
+     * 2. Ambil data email dan password dari form
+     * 3. Validasi data, jika kosong langsung stop
+     * 4. Tampilkan loading indicator
+     * 5. Kirim data ke server untuk proses login
+     * 6. Jika berhasil: tutup modal, tampilkan sukses, update UI, redirect
+     * 7. Jika gagal: tampilkan pesan error
+     * 8. Selalu hide loading di akhir (baik sukses maupun error)
+     * 
+     * @param {Event} e - Event object dari form submit
+     */
     async handleLogin(e) {
+        // 1. Cegah behavior default form submit (reload halaman)
+        // Tanpa ini, halaman akan reload dan proses login tidak bisa dikontrol
         e.preventDefault();
         
+        // 2. Ambil data dari form login (email dan password)
+        // Method getLoginFormData() mengambil nilai dari input form
         const data = this.view.getLoginFormData();
+        
+        // 3. Validasi: jika data tidak ada atau kosong, langsung stop
+        // Early return untuk menghindari proses yang tidak perlu
         if (!data) return;
 
+        // 4. Gunakan try-catch untuk menangani error yang mungkin terjadi
         try {
+            // 5. Tampilkan loading indicator ke user
+            // Memberi feedback bahwa proses sedang berjalan
             this.view.showLoading();
-            const result = await this.authService.login(data.email, data.password);
             
+            // 6. Proses login: kirim email dan password ke server
+            // Menggunakan AuthService.loginUser() sesuai DPPL Algoritma #3
+            // await = tunggu sampai proses selesai (karena async)
+            const result = await this.authService.loginUser(data.email, data.password);
+            
+            // 7. Cek hasil login: jika result.ok = true berarti login berhasil
             if (result.ok) {
-                localStorage.setItem('userInfo', JSON.stringify(result.data.user));
-                localStorage.setItem('authToken', result.data.token);
-                
+                // 7a. Tutup modal/form login karena sudah berhasil
                 this.view.hideLoginModal();
+                
+                // 7b. Tampilkan pesan sukses ke user (alert hijau)
                 this.view.showAlert('Login successful!', 'success');
+                
+                // 7c. Update UI: refresh status autentikasi dan tampilkan info user
+                // await = tunggu sampai proses selesai
                 await this.checkAuth();
+                
+                // 7d. Reset form: kosongkan input email dan password
+                // Untuk keamanan dan user experience yang lebih baik
                 this.view.resetForm('loginForm');
                 
+                // 7e. Redirect ke dashboard setelah 1 detik
+                // setTimeout memberi jeda agar user sempat membaca pesan sukses
                 setTimeout(() => {
                     this.view.redirect('dashboard.html');
                 }, 1000);
             } else {
+                // 8. Jika login gagal: tampilkan pesan error
+                // result.error = pesan error dari server (jika ada)
+                // || 'Login failed' = fallback jika error tidak ada
                 this.view.showAlert(result.error || 'Login failed', 'error');
             }
         } catch (error) {
+            // 9. Tangani error yang tidak terduga (misalnya koneksi internet putus)
+            // Error ini berbeda dengan login gagal (baris 77)
+            // Ini untuk error teknis seperti network error, server down, dll
             this.view.showAlert('Login failed. Please try again.', 'error');
         } finally {
+            // 10. Blok finally SELALU dijalankan (baik sukses maupun error)
+            // Pastikan loading indicator selalu di-hide
+            // Mencegah loading terus muncul jika ada error
             this.view.hideLoading();
         }
     }
 
+    /**
+     * Handle register menggunakan UserService.registrasiUser() sesuai Algoritma #5 DPPL
+     */
     async handleRegister(e) {
         e.preventDefault();
         
         const data = this.view.getRegisterFormData();
         if (!data) return;
 
+        // Validasi nomor telepon jika diisi
+        if (data.phone && data.phone.trim() !== '') {
+            // Hapus semua karakter non-angka
+            const phoneDigits = data.phone.replace(/\D/g, '');
+            
+            // Validasi format nomor Indonesia (08xxxxxxxxxx, 10-13 digit)
+            if (!/^08\d{8,11}$/.test(phoneDigits)) {
+                this.view.showAlert('Nomor telepon tidak valid. Format: 08xxxxxxxxxx (10-13 digit, hanya angka)', 'error');
+                return;
+            }
+            
+            // Update data dengan nomor yang sudah dibersihkan
+            data.phone = phoneDigits;
+        }
+
         try {
             this.view.showLoading();
-            const result = await this.authService.register(data);
+            
+            // Menggunakan UserService.registrasiUser() sesuai DPPL Algoritma #5
+            const result = await this.userService.registrasiUser(
+                data.name,
+                data.email,
+                data.password,
+                data.phone,
+                data.address
+            );
             
             if (result.ok) {
-                localStorage.setItem('userInfo', JSON.stringify(result.data.user));
-                localStorage.setItem('authToken', result.data.token);
-                
                 this.view.hideRegisterModal();
                 this.view.showAlert('Registration successful!', 'success');
                 await this.checkAuth();
@@ -102,15 +174,30 @@ export class AppController {
                     this.view.redirect('dashboard.html');
                 }, 1000);
             } else {
-                this.view.showAlert(result.error || 'Registration failed', 'error');
+                const errorMsg = result.message || result.error || 'Registration failed';
+                this.view.showAlert(errorMsg, 'error');
             }
         } catch (error) {
-            this.view.showAlert('Registration failed. Please try again.', 'error');
+            // Show specific error message if available
+            let errorMsg = 'Registration failed. Please check your input and try again.';
+            
+            if (error.message) {
+                errorMsg = error.message;
+            } else if (error.result) {
+                errorMsg = error.result.message || error.result.error || errorMsg;
+            }
+            
+            console.error('Registration error:', error);
+            console.log('Displaying error message:', errorMsg);
+            this.view.showAlert(errorMsg, 'error');
         } finally {
             this.view.hideLoading();
         }
     }
 
+    /**
+     * Handle forgot password menggunakan AuthService.resetPassword() sesuai Algoritma #19 DPPL
+     */
     async handleForgotPassword(e) {
         e.preventDefault();
         
@@ -119,7 +206,9 @@ export class AppController {
 
         try {
             this.view.showLoading();
-            const result = await this.authService.forgotPassword(data.email);
+            
+            // Menggunakan AuthService.resetPassword() sesuai DPPL Algoritma #19
+            const result = await this.authService.resetPassword(data.email);
             
             if (result.ok) {
                 this.view.hideForgotPasswordModal();
@@ -197,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
     appController = new AppController();
     window.appController = appController;
 });
+
 
 
 

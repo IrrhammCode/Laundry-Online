@@ -10,12 +10,11 @@
 
 /**
  * User Role Constants
- * Dari: ENUM('CUSTOMER', 'ADMIN', 'COURIER') di tabel users
+ * Dari: ENUM('CUSTOMER', 'ADMIN') di tabel users
  */
 const UserRole = {
   CUSTOMER: 'CUSTOMER',
-  ADMIN: 'ADMIN',
-  COURIER: 'COURIER'
+  ADMIN: 'ADMIN'
 };
 
 /**
@@ -49,7 +48,7 @@ const OrderStatus = {
  * Dari database schema (setup-db.js line 29-40):
  * CREATE TABLE users (
  *   id INT PRIMARY KEY AUTO_INCREMENT,
- *   role ENUM('CUSTOMER', 'ADMIN', 'COURIER') NOT NULL DEFAULT 'CUSTOMER',
+ *   role ENUM('CUSTOMER', 'ADMIN') NOT NULL DEFAULT 'CUSTOMER',
  *   name VARCHAR(255) NOT NULL,
  *   email VARCHAR(255) UNIQUE NOT NULL,
  *   password_hash VARCHAR(255) NOT NULL,
@@ -65,7 +64,7 @@ const OrderStatus = {
  */
 const User = {
   id: null,                    // INT - PRIMARY KEY
-  role: UserRole.CUSTOMER,     // ENUM('CUSTOMER', 'ADMIN', 'COURIER')
+  role: UserRole.CUSTOMER,     // ENUM('CUSTOMER', 'ADMIN')
   name: '',                     // VARCHAR(255) NOT NULL
   email: '',                    // VARCHAR(255) UNIQUE NOT NULL
   password_hash: '',            // VARCHAR(255) NOT NULL (hanya di database)
@@ -167,7 +166,7 @@ const OrderItem = {
 
 /**
  * Order Detail Response (dari routes/orders.js dan routes/admin.js)
- * Menggabungkan Order + OrderItems + Payments + CourierUpdates + Messages
+ * Menggabungkan Order + OrderItems + Payments + Messages
  */
 const OrderDetail = {
   // Order fields
@@ -188,7 +187,6 @@ const OrderDetail = {
   // Related collections
   items: [],              // Array of OrderItem
   payments: [],           // Array of Payment
-  courier_updates: [],    // Array of CourierUpdate
   messages: []            // Array of Message (admin only)
 };
 
@@ -268,30 +266,6 @@ const Payment = {
   created_at: null
 };
 
-/**
- * Courier Update Structure (related to Order)
- * 
- * Dari database schema (setup-db.js line 129-140):
- * CREATE TABLE courier_updates (
- *   id INT PRIMARY KEY AUTO_INCREMENT,
- *   order_id INT NOT NULL,
- *   courier_id INT NOT NULL,
- *   delivery_status ENUM('PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED') NOT NULL,
- *   notes TEXT,
- *   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
- *   FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
- *   FOREIGN KEY (courier_id) REFERENCES users(id) ON DELETE CASCADE
- * )
- */
-const CourierUpdate = {
-  id: null,
-  order_id: null,
-  courier_id: null,
-  delivery_status: 'PICKED_UP',  // ENUM('PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED')
-  notes: null,
-  created_at: null,
-  courier_name: null  // Dari JOIN dengan users
-};
 
 /**
  * Message Structure (related to Order)
@@ -340,7 +314,6 @@ if (typeof module !== 'undefined' && module.exports) {
     
     // Related Models
     Payment,
-    CourierUpdate,
     Message
   };
 }
@@ -358,8 +331,10 @@ if (typeof window !== 'undefined') {
   window.OrderListItem = OrderListItem;
   window.Service = Service;
   window.Payment = Payment;
-  window.CourierUpdate = CourierUpdate;
   window.Message = Message;
 }
+
+
+
 
 

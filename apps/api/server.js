@@ -11,7 +11,6 @@ const db = require('./config/database');
 const authRoutes = require('./routes/auth');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
-const courierRoutes = require('./routes/courier');
 const chatRoutes = require('./routes/chat');
 const { authenticateToken } = require('./middleware/auth');
 
@@ -54,7 +53,6 @@ app.use(generalLimiter);
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/orders', authenticateToken, orderRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/courier', courierRoutes);
 app.use('/api/chat', authenticateToken, chatRoutes);
 
 // Public routes (no authentication required)

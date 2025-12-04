@@ -14,7 +14,20 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user from database
+    // Handle hardcoded admin
+    if (decoded.role === 'ADMIN' && decoded.userId === 1) {
+      req.user = {
+        id: 1,
+        name: 'Admin User',
+        email: 'admin@laundry.com',
+        role: 'ADMIN',
+        phone: '081234567890',
+        address: null
+      };
+      return next();
+    }
+    
+    // Get user from database for regular users
     const [users] = await db.execute(
       'SELECT id, role, name, email, phone, address FROM users WHERE id = ?',
       [decoded.userId]

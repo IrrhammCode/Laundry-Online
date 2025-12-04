@@ -25,8 +25,9 @@ router.post('/register', [
   body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('phone').optional().isMobilePhone('id-ID').withMessage('Valid phone number required'),
-  body('address').optional().trim().isLength({ min: 10 }).withMessage('Address must be at least 10 characters')
+  body('phone').optional({ nullable: true, checkFalsy: true }).trim()
+    .matches(/^08\d{8,11}$/).withMessage('Nomor telepon harus dimulai dengan 08 dan terdiri dari 10-13 digit angka'),
+  body('address').optional({ nullable: true, checkFalsy: true }).trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -34,13 +35,16 @@ router.post('/register', [
       return res.status(400).json({
         ok: false,
         error: 'Validation failed',
-        details: errors.array()
+        details: errors.array(),
+        message: errors.array().map(e => e.msg).join(', ')
       });
     }
 
     const { name, email, password, phone, address } = req.body;
 
-    // Check if user already exists
+    // Query #6 DPPL: Cek apakah email sudah terdaftar
+    // DPPL: SELECT COUNT(*) FROM user WHERE email = ?;
+    // Implementasi: Menggunakan SELECT id untuk cek keberadaan (lebih efisien)
     const [existingUsers] = await db.execute(
       'SELECT id FROM users WHERE email = ?',
       [email]
@@ -49,7 +53,8 @@ router.post('/register', [
     if (existingUsers.length > 0) {
       return res.status(409).json({
         ok: false,
-        error: 'Email already registered'
+        error: 'Email sudah terdaftar. Silakan gunakan email lain atau login dengan email ini.',
+        message: 'Email sudah terdaftar. Silakan gunakan email lain atau login dengan email ini.'
       });
     }
 
@@ -118,7 +123,9 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
-    // Find user
+    // Query #4 DPPL: Cari data user berdasarkan email
+    // DPPL: SELECT * FROM user WHERE email = ?;
+    // Implementasi: Menggunakan users (bukan user) dan hanya mengambil kolom yang diperlukan
     const [users] = await db.execute(
       'SELECT id, name, email, password_hash, role, phone, address FROM users WHERE email = ?',
       [email]
@@ -181,7 +188,7 @@ router.post('/login', [
   }
 });
 
-// FR-05: Admin Login
+// FR-05: Admin Login (Hardcoded)
 router.post('/admin/login', [
   body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
   body('password').notEmpty().withMessage('Password required')
@@ -198,24 +205,14 @@ router.post('/admin/login', [
 
     const { email, password } = req.body;
 
-    // Find admin user
-    const [users] = await db.execute(
-      'SELECT id, name, email, password_hash, role FROM users WHERE email = ? AND role = "ADMIN"',
-      [email]
-    );
+    // Hardcoded admin credentials
+    const ADMIN_EMAIL = 'admin@laundry.com';
+    const ADMIN_PASSWORD = 'admin123';
+    const ADMIN_ID = 1; // Hardcoded admin ID
+    const ADMIN_NAME = 'Admin User';
 
-    if (users.length === 0) {
-      return res.status(401).json({
-        ok: false,
-        error: 'Invalid admin credentials'
-      });
-    }
-
-    const user = users[0];
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) {
+    // Check hardcoded credentials
+    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
       return res.status(401).json({
         ok: false,
         error: 'Invalid admin credentials'
@@ -224,7 +221,7 @@ router.post('/admin/login', [
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      { userId: ADMIN_ID, role: 'ADMIN' },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -241,10 +238,10 @@ router.post('/admin/login', [
       ok: true,
       data: {
         user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
+          id: ADMIN_ID,
+          name: ADMIN_NAME,
+          email: ADMIN_EMAIL,
+          role: 'ADMIN'
         },
         token
       }
@@ -275,7 +272,8 @@ router.post('/forgot', [
 
     const { email } = req.body;
 
-    // Check if user exists
+    // Query #20 DPPL: Cek apakah email terdaftar untuk reset password
+    // DPPL: SELECT * FROM user WHERE email = ?;
     const [users] = await db.execute(
       'SELECT id, name FROM users WHERE email = ?',
       [email]
@@ -356,7 +354,9 @@ router.post('/reset', [
       });
     }
 
-    // Hash new password
+    // Query #20 DPPL: Update password setelah reset
+    // DPPL: UPDATE user SET password = ? WHERE email = ?;
+    // Implementasi: Menggunakan id (lebih aman) dan password_hash (sudah dienkripsi)
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Update password
@@ -409,6 +409,24 @@ router.get('/me', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
+    // Handle hardcoded admin
+    if (decoded.role === 'ADMIN' && decoded.userId === 1) {
+      return res.json({
+        ok: true,
+        data: {
+          user: {
+            id: 1,
+            name: 'Admin User',
+            email: 'admin@laundry.com',
+            role: 'ADMIN',
+            phone: '081234567890',
+            address: null
+          }
+        }
+      });
+    }
+    
+    // Regular user lookup from database
     const [users] = await db.execute(
       'SELECT id, name, email, role, phone, address FROM users WHERE id = ?',
       [decoded.userId]
