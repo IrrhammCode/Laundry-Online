@@ -219,6 +219,18 @@
         </div>
     </footer>
 
+    <!-- Set API URL from environment variable (Vercel injects this) -->
+    <script>
+        // Vercel injects environment variables as %VITE_API_URL% during build
+        // For static sites, we need to set it manually or use a build step
+        // This will be replaced by Vercel during deployment
+        window.VITE_API_URL = window.VITE_API_URL || '%VITE_API_URL%' || 'http://localhost:3001/api';
+        
+        // If %VITE_API_URL% is not replaced (local dev), use localhost
+        if (window.VITE_API_URL === '%VITE_API_URL%') {
+            window.VITE_API_URL = 'http://localhost:3001/api';
+        }
+    </script>
     <script type="module" src="js/controllers/AppController.js"></script>
 </body>
 </html>
