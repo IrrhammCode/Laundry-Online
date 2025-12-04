@@ -23,11 +23,14 @@ const frontendUrls = frontendUrl.split(',').map(url => url.trim()).filter(Boolea
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
-  ...frontendUrls
+  ...frontendUrls,
+  // Allow Vercel preview deployments (wildcard)
+  /^https:\/\/.*\.vercel\.app$/
 ].filter(Boolean);
 
 // Log allowed origins for debugging
 console.log('Allowed CORS origins:', allowedOrigins);
+console.log('FRONTEND_URL from env:', process.env.FRONTEND_URL);
 
 const io = new Server(server, {
   cors: {
@@ -47,8 +50,17 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Check if origin is in allowed list
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Check if origin matches any allowed origin (string or regex)
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return allowed === origin;
+      } else if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
       console.warn('CORS blocked origin:', origin);
