@@ -29,37 +29,40 @@ class AdminOrders {
 
     async checkAuth() {
         try {
-            const user = await this.authService.getCurrentUser();
-            if (user && user.role === 'ADMIN') {
-                this.ui.showUserNav(user);
-            } else {
-                // Try localStorage fallback
-                const userInfo = localStorage.getItem('userInfo');
-                if (userInfo) {
-                    const user = JSON.parse(userInfo);
-                    if (user.role === 'ADMIN') {
-                        this.ui.showUserNav(user);
-                    } else {
-                        alert('Access Denied! Admin access required.');
-                        window.location.href = '../index.html';
-                    }
-                } else {
-                    window.location.href = '../index.html';
+            // Check localStorage first (more reliable after redirect)
+            const userInfo = localStorage.getItem('userInfo');
+            if (userInfo) {
+                const user = JSON.parse(userInfo);
+                if (user && user.role === 'ADMIN') {
+                    this.ui.showUserNav(user);
+                    return;
                 }
             }
+            
+            // Fallback to API call
+            const user = await this.authService.getCurrentUser();
+            if (user && user.role === 'ADMIN') {
+                // Update localStorage with fresh data
+                localStorage.setItem('userInfo', JSON.stringify(user));
+                this.ui.showUserNav(user);
+            } else {
+                alert('Access Denied! Admin access required.');
+                window.location.href = '../index.html';
+            }
         } catch (error) {
+            console.error('Auth check error:', error);
             // Try localStorage fallback
             const userInfo = localStorage.getItem('userInfo');
             if (userInfo) {
                 const user = JSON.parse(userInfo);
-                if (user.role === 'ADMIN') {
+                if (user && user.role === 'ADMIN') {
                     this.ui.showUserNav(user);
                 } else {
                     alert('Access Denied! Admin access required.');
                     window.location.href = '../index.html';
                 }
             } else {
-                window.location.href = 'login.html';
+                window.location.href = '../index.html';
             }
         }
     }

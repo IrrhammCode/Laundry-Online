@@ -21,35 +21,40 @@ export class AdminServicesController {
 
     async checkAuth() {
         try {
-            const user = await this.authService.getCurrentUser();
-            if (user && user.role === 'ADMIN') {
-                this.view.showUserNav(user);
-            } else {
-                const userInfo = localStorage.getItem('userInfo');
-                if (userInfo) {
-                    const user = JSON.parse(userInfo);
-                    if (user.role === 'ADMIN') {
-                        this.view.showUserNav(user);
-                    } else {
-                        alert('Access Denied! Admin access required.');
-                        this.view.redirect('../../index.html');
-                    }
-                } else {
-                    this.view.redirect('login.html');
-                }
-            }
-        } catch (error) {
+            // Check localStorage first (more reliable after redirect)
             const userInfo = localStorage.getItem('userInfo');
             if (userInfo) {
                 const user = JSON.parse(userInfo);
-                if (user.role === 'ADMIN') {
+                if (user && user.role === 'ADMIN') {
+                    this.view.showUserNav(user);
+                    return;
+                }
+            }
+            
+            // Fallback to API call
+            const user = await this.authService.getCurrentUser();
+            if (user && user.role === 'ADMIN') {
+                // Update localStorage with fresh data
+                localStorage.setItem('userInfo', JSON.stringify(user));
+                this.view.showUserNav(user);
+            } else {
+                alert('Access Denied! Admin access required.');
+                this.view.redirect('../../index.html');
+            }
+        } catch (error) {
+            console.error('Auth check error:', error);
+            // Try localStorage fallback
+            const userInfo = localStorage.getItem('userInfo');
+            if (userInfo) {
+                const user = JSON.parse(userInfo);
+                if (user && user.role === 'ADMIN') {
                     this.view.showUserNav(user);
                 } else {
                     alert('Access Denied! Admin access required.');
-                    this.view.redirect('login.html');
+                    this.view.redirect('../../index.html');
                 }
             } else {
-                this.view.redirect('login.html');
+                this.view.redirect('../../index.html');
             }
         }
     }
