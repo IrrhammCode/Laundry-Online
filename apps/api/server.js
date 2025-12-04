@@ -16,6 +16,10 @@ const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
 const server = createServer(app);
+
+// Trust proxy for Railway/Vercel deployments
+app.set('trust proxy', 1);
+
 // Get frontend URL from environment or use default
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 // Support multiple frontend URLs (comma-separated)
@@ -24,7 +28,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   ...frontendUrls,
-  // Allow Vercel preview deployments (wildcard)
+  // Allow all Vercel deployments (production and preview)
   /^https:\/\/.*\.vercel\.app$/
 ].filter(Boolean);
 
