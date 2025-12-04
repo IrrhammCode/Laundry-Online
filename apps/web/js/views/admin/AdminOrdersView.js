@@ -25,7 +25,7 @@ export class AdminOrdersView {
                         <small>${order.phone}</small>
                     </div>
                 </td>
-                <td>${order.items ? order.items.length : 0} item(s)</td>
+                <td>${this.getItemsCount(order)}</td>
                 <td>Rp ${parseFloat(order.price_total).toLocaleString()}</td>
                 <td><span class="status status-${order.status.toLowerCase()}">${order.status}</span></td>
                 <td>${new Date(order.created_at).toLocaleDateString()}</td>
@@ -36,6 +36,23 @@ export class AdminOrdersView {
             `;
             this.ordersTableBody.appendChild(row);
         });
+    }
+
+    getItemsCount(order) {
+        // Check if items_count exists (from backend query)
+        if (order.items_count !== undefined && order.items_count !== null) {
+            return `${order.items_count} item(s)`;
+        }
+        // Check if items array exists
+        if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+            return `${order.items.length} item(s)`;
+        }
+        // Check if order_items exists
+        if (order.order_items && Array.isArray(order.order_items) && order.order_items.length > 0) {
+            return `${order.order_items.length} item(s)`;
+        }
+        // Default fallback
+        return '0 item(s)';
     }
 
     getStatusButton(currentStatus, orderId) {
@@ -50,10 +67,22 @@ export class AdminOrdersView {
     }
 
     updatePagination(pagination) {
-        if (pagination && this.pageInfo && this.prevPage && this.nextPage) {
-            this.pageInfo.textContent = `Page ${pagination.current_page} of ${pagination.total_pages}`;
-            this.prevPage.disabled = pagination.current_page <= 1;
-            this.nextPage.disabled = pagination.current_page >= pagination.total_pages;
+        if (this.pageInfo && this.prevPage && this.nextPage) {
+            if (pagination) {
+                // Handle different pagination formats
+                const currentPage = pagination.current_page || pagination.page || pagination.currentPage || 1;
+                const totalPages = pagination.total_pages || pagination.pages || pagination.totalPages || 1;
+                const total = pagination.total || pagination.totalItems || 0;
+                
+                this.pageInfo.textContent = `Page ${currentPage} of ${totalPages}${total > 0 ? ` (${total} total)` : ''}`;
+                this.prevPage.disabled = currentPage <= 1;
+                this.nextPage.disabled = currentPage >= totalPages;
+            } else {
+                // Fallback if pagination is not provided
+                this.pageInfo.textContent = 'Page 1 of 1';
+                this.prevPage.disabled = true;
+                this.nextPage.disabled = true;
+            }
         }
     }
 

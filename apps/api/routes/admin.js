@@ -31,7 +31,8 @@ router.get('/orders', async (req, res) => {
     let query = `
       SELECT 
         o.id, o.pickup_method, o.status, o.price_total, o.created_at, o.updated_at,
-        u.name as customer_name, u.phone, u.email
+        u.name as customer_name, u.phone, u.email,
+        (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as items_count
       FROM orders o
       JOIN users u ON o.user_id = u.id
     `;
@@ -82,8 +83,10 @@ router.get('/orders', async (req, res) => {
         orders,
         pagination: {
           page: parseInt(page),
+          current_page: parseInt(page),
           limit: parseInt(limit),
           total,
+          total_pages: Math.ceil(total / limit),
           pages: Math.ceil(total / limit)
         }
       }
