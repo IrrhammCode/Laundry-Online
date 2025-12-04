@@ -39,7 +39,7 @@ export class AdminAuthService {
 
             // 3. Jika benar, buat session admin
             if (result.ok && result.data.token) {
-                localStorage.setItem('adminToken', result.data.token);
+                localStorage.setItem('authToken', result.data.token);
                 localStorage.setItem('adminInfo', JSON.stringify(result.data.admin));
             }
 
@@ -69,13 +69,13 @@ export class AdminAuthService {
                 credentials: 'include'
             });
 
-            localStorage.removeItem('adminToken');
+            localStorage.removeItem('authToken');
             localStorage.removeItem('adminInfo');
 
             return await response.json();
         } catch (error) {
             console.error('Error logout:', error);
-            localStorage.removeItem('adminToken');
+            localStorage.removeItem('authToken');
             localStorage.removeItem('adminInfo');
             return { ok: true };
         }

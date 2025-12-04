@@ -17,7 +17,7 @@ export class StatusLaundry {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 },
                 credentials: 'include',
                 body: JSON.stringify({ 
