@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "node vercel-build.js || echo 'Build script completed'",
+  "buildCommand": "node vercel-build.js",
   "outputDirectory": "apps/web",
   "rewrites": [
     {

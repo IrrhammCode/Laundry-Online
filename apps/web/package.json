@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "dev": "npx live-server --port=3000 --open=/index.html",
-    "build": "node ../../vercel-build.js"
+    "build": "cd ../.. && node vercel-build.js"
   },
   "devDependencies": {
     "live-server": "^1.2.2"
