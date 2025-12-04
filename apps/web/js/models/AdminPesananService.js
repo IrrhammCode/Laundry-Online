@@ -21,7 +21,7 @@ export class AdminPesananService {
 
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 },
                 credentials: 'include'
             });
@@ -51,7 +51,7 @@ export class AdminPesananService {
         try {
             const response = await fetch(`${this.baseURL}/admin/orders/${pesananID}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 },
                 credentials: 'include'
             });
@@ -94,7 +94,7 @@ export class AdminPesananService {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 },
                 credentials: 'include',
                 body: JSON.stringify({ status: statusBaru })
