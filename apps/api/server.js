@@ -18,11 +18,16 @@ const app = express();
 const server = createServer(app);
 // Get frontend URL from environment or use default
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+// Support multiple frontend URLs (comma-separated)
+const frontendUrls = frontendUrl.split(',').map(url => url.trim()).filter(Boolean);
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
-  frontendUrl
+  ...frontendUrls
 ].filter(Boolean);
+
+// Log allowed origins for debugging
+console.log('Allowed CORS origins:', allowedOrigins);
 
 const io = new Server(server, {
   cors: {
