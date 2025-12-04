@@ -1,36 +1,10 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "apps/api/server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "apps/web/**",
-      "use": "@vercel/static"
+      "source": "/(.*)",
+      "destination": "/apps/web/index.html"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "apps/api/server.js"
-    },
-    {
-      "src": "/(.*\\.(html|css|js|png|jpg|jpeg|gif|svg|ico|json))",
-      "dest": "apps/web/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "apps/web/index.html"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "apps/api/server.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
 
