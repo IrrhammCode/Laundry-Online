@@ -102,6 +102,19 @@ export class OrderView {
         if (this.paymentAmountEl) {
             this.paymentAmountEl.value = order.price_total;
         }
+        
+        // Show QRIS mockup by default
+        const qrisMockup = document.getElementById('qrisMockup');
+        const paymentForm = document.getElementById('paymentForm');
+        if (qrisMockup) qrisMockup.style.display = 'block';
+        if (paymentForm) paymentForm.style.display = 'none';
+        
+        // Reset QRIS status
+        const qrisStatus = document.getElementById('qrisStatus');
+        if (qrisStatus) {
+            qrisStatus.innerHTML = '<p>Menunggu pembayaran...</p>';
+        }
+        
         if (this.paymentModal) {
             this.paymentModal.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -147,6 +160,24 @@ export class OrderView {
      * @returns {Object} - Payment form data
      */
     getPaymentFormData() {
+        // Get amount from hidden input
+        const amountEl = document.getElementById('paymentAmount');
+        const amount = amountEl ? parseFloat(amountEl.value) : null;
+        
+        // Default to QRIS if form not visible
+        const method = 'QRIS';
+        
+        return {
+            method: method,
+            amount: amount
+        };
+    }
+    
+    /**
+     * Get payment form data (legacy method)
+     * @returns {Object} - Payment form data
+     */
+    getPaymentFormDataLegacy() {
         const form = document.getElementById('paymentForm');
         if (!form) return null;
 
@@ -268,6 +299,52 @@ export class OrderView {
         const paymentForm = document.getElementById('paymentForm');
         if (paymentForm && callbacks.onPaymentSubmit) {
             paymentForm.addEventListener('submit', callbacks.onPaymentSubmit);
+        }
+        
+        // QRIS simulate payment button
+        const simulatePaymentBtn = document.getElementById('simulatePayment');
+        if (simulatePaymentBtn && callbacks.onPaymentSubmit) {
+            simulatePaymentBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Simulate payment success
+                const qrisStatus = document.getElementById('qrisStatus');
+                if (qrisStatus) {
+                    qrisStatus.innerHTML = '<p style="color: #28a745; font-weight: bold;">✓ Pembayaran berhasil!</p>';
+                }
+                
+                // Disable button
+                simulatePaymentBtn.disabled = true;
+                simulatePaymentBtn.textContent = 'Memproses...';
+                
+                // Trigger payment submit after short delay
+                setTimeout(() => {
+                    if (callbacks.onPaymentSubmit) {
+                        const fakeEvent = { preventDefault: () => {} };
+                        callbacks.onPaymentSubmit(fakeEvent);
+                    }
+                }, 1000);
+            });
+        }
+        
+        // QRIS simulate payment button
+        const simulatePaymentBtn = document.getElementById('simulatePayment');
+        if (simulatePaymentBtn && callbacks.onPaymentSubmit) {
+            simulatePaymentBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Simulate payment success after 2 seconds
+                const qrisStatus = document.getElementById('qrisStatus');
+                if (qrisStatus) {
+                    qrisStatus.innerHTML = '<p style="color: #28a745;">✓ Pembayaran berhasil!</p>';
+                }
+                
+                setTimeout(() => {
+                    // Trigger payment submit
+                    if (callbacks.onPaymentSubmit) {
+                        const fakeEvent = { preventDefault: () => {} };
+                        callbacks.onPaymentSubmit(fakeEvent);
+                    }
+                }, 2000);
+            });
         }
 
         // Logout button

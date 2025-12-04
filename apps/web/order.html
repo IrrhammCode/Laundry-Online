@@ -121,12 +121,39 @@
             <div class="modal-body">
                 <div class="payment-info">
                     <h4>Order Total: <span id="paymentTotal"></span></h4>
-                    <p>Please confirm your payment method and mark as paid:</p>
                 </div>
-                <form id="paymentForm">
+                
+                <!-- QRIS Mockup -->
+                <div id="qrisMockup" class="qris-mockup" style="display: none;">
+                    <div class="qris-container">
+                        <h4>Scan QRIS untuk Pembayaran</h4>
+                        <div class="qris-code">
+                            <div class="qris-placeholder">
+                                <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="200" height="200" fill="#fff"/>
+                                    <rect x="10" y="10" width="40" height="40" fill="#000"/>
+                                    <rect x="150" y="10" width="40" height="40" fill="#000"/>
+                                    <rect x="10" y="150" width="40" height="40" fill="#000"/>
+                                    <rect x="50" y="50" width="100" height="100" fill="#000"/>
+                                    <rect x="60" y="60" width="80" height="80" fill="#fff"/>
+                                    <rect x="70" y="70" width="60" height="60" fill="#000"/>
+                                    <text x="100" y="190" text-anchor="middle" font-size="12" fill="#666">QRIS Mockup</text>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="qris-instruction">Silakan scan QR code di atas untuk melakukan pembayaran</p>
+                        <div class="qris-status" id="qrisStatus">
+                            <p>Menunggu pembayaran...</p>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="simulatePayment">Simulasi Pembayaran Berhasil</button>
+                    </div>
+                </div>
+                
+                <!-- Transfer Form (hidden by default) -->
+                <form id="paymentForm" style="display: none;">
                     <div class="form-group">
                         <label>Payment Method</label>
-                        <select name="method" required>
+                        <select name="method" id="paymentMethod" required>
                             <option value="QRIS">QRIS</option>
                             <option value="TRANSFER">Bank Transfer</option>
                         </select>
