@@ -103,19 +103,23 @@ app.use('/api/chat', authenticateToken, chatRoutes);
 // Public routes (no authentication required)
 app.get('/api/services', async (req, res) => {
   try {
+    console.log('GET /api/services - Request received from:', req.headers.origin);
     const [services] = await db.execute(
       'SELECT id, name, base_price, unit, description FROM services ORDER BY name'
     );
 
+    console.log('GET /api/services - Services found:', services.length);
     res.json({
       ok: true,
       data: { services }
     });
   } catch (error) {
     console.error('Get services error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       ok: false,
-      error: 'Failed to fetch services'
+      error: 'Failed to fetch services',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
