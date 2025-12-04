@@ -150,7 +150,7 @@ class AdminOrders {
                         <small>${order.phone}</small>
                     </div>
                 </td>
-                <td>${order.items ? order.items.length : 0} item(s)</td>
+                <td>${order.items_count !== undefined && order.items_count !== null ? order.items_count : (order.items ? order.items.length : 0)} item(s)</td>
                 <td>Rp ${parseFloat(order.price_total).toLocaleString()}</td>
                 <td><span class="status status-${order.status.toLowerCase()}">${order.status}</span></td>
                 <td>${new Date(order.created_at).toLocaleDateString()}</td>

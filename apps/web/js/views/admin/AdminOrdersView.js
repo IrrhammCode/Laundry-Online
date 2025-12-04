@@ -28,7 +28,7 @@ export class AdminOrdersView {
                 <td>${this.getItemsCount(order)}</td>
                 <td>Rp ${parseFloat(order.price_total).toLocaleString()}</td>
                 <td><span class="status status-${order.status.toLowerCase()}">${order.status}</span></td>
-                <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                <td>${this.formatDate(order.created_at)}</td>
                 <td>
                     <button class="btn btn-sm btn-primary" onclick="window.adminOrdersController.viewOrder(${order.id})">View</button>
                     ${this.getStatusButton(order.status, order.id)}
@@ -53,6 +53,16 @@ export class AdminOrdersView {
         }
         // Default fallback
         return '0 item(s)';
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
     }
 
     getStatusButton(currentStatus, orderId) {
