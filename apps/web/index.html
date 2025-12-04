@@ -219,17 +219,14 @@
         </div>
     </footer>
 
-    <!-- Set API URL from environment variable (Vercel injects this) -->
+    <!-- Set API URL - Update dengan URL backend Railway yang sebenarnya -->
     <script>
-        // Vercel injects environment variables as http://localhost:3001/api during build
-        // For static sites, we need to set it manually or use a build step
-        // This will be replaced by Vercel during deployment
-        window.VITE_API_URL = window.VITE_API_URL || 'http://localhost:3001/api' || 'http://localhost:3001/api';
-        
-        // If http://localhost:3001/api is not replaced (local dev), use localhost
-        if (window.VITE_API_URL === 'http://localhost:3001/api') {
-            window.VITE_API_URL = 'http://localhost:3001/api';
-        }
+        // Production: Ganti dengan URL backend Railway
+        // Development: Akan pakai localhost dari config.js
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        window.VITE_API_URL = isProduction 
+            ? 'https://YOUR-BACKEND-RAILWAY-URL.railway.app/api'  // GANTI INI dengan URL backend Railway
+            : 'http://localhost:3001/api';
     </script>
     <script type="module" src="js/controllers/AppController.js"></script>
 </body>
