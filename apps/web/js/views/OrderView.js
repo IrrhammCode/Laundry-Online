@@ -325,27 +325,6 @@ export class OrderView {
                 }, 1000);
             });
         }
-        
-        // QRIS simulate payment button
-        const simulatePaymentBtn = document.getElementById('simulatePayment');
-        if (simulatePaymentBtn && callbacks.onPaymentSubmit) {
-            simulatePaymentBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                // Simulate payment success after 2 seconds
-                const qrisStatus = document.getElementById('qrisStatus');
-                if (qrisStatus) {
-                    qrisStatus.innerHTML = '<p style="color: #28a745;">✓ Pembayaran berhasil!</p>';
-                }
-                
-                setTimeout(() => {
-                    // Trigger payment submit
-                    if (callbacks.onPaymentSubmit) {
-                        const fakeEvent = { preventDefault: () => {} };
-                        callbacks.onPaymentSubmit(fakeEvent);
-                    }
-                }, 2000);
-            });
-        }
 
         // Logout button
         const logoutBtn = document.getElementById('logoutBtn');
