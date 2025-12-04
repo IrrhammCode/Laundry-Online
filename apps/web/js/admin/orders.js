@@ -106,7 +106,8 @@ class AdminOrders {
             }
             
             // Load orders from API
-            const response = await fetch(`http://localhost:3001/api/admin/orders?page=${this.currentPage}&limit=10&status=${this.currentStatus}&search=${this.currentSearch}`, {
+            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/orders?page=${this.currentPage}&limit=10&status=${this.currentStatus}&search=${this.currentSearch}`, {
                 headers: headers,
                 credentials: 'include'
             });
@@ -186,7 +187,8 @@ class AdminOrders {
             
             console.log(`Updating order ${orderId} to status: ${newStatus}`);
             
-            const response = await fetch(`http://localhost:3001/api/admin/orders/${orderId}/status`, {
+            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/orders/${orderId}/status`, {
                 method: 'PATCH',
                 headers: headers,
                 credentials: 'include',
@@ -236,7 +238,8 @@ class AdminOrders {
                 console.log('Using localStorage token for order detail');
             }
             
-            const response = await fetch(`http://localhost:3001/api/admin/orders/${orderId}`, {
+            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/orders/${orderId}`, {
                 headers: headers,
                 credentials: 'include'
             });

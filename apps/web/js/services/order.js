@@ -1,7 +1,9 @@
 // Order Service
+import API_CONFIG from '../config.js';
+
 export class OrderService {
     constructor() {
-        this.baseURL = 'http://localhost:3001/api';
+        this.baseURL = API_CONFIG.baseURL;
     }
 
     async getServices() {

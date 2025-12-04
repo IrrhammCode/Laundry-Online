@@ -54,6 +54,11 @@
         </div>
     </main>
 
+    <script type="module">
+        // Set API URL from environment variable
+        const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3001/api';
+        window.API_URL = API_URL;
+    </script>
     <script>
         // Check if user is logged in
         async function checkAuth() {
@@ -61,7 +66,8 @@
                 // Wait a bit for cookie to be set
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                const response = await fetch('http://localhost:3001/api/auth/me', {
+                const apiURL = window.API_URL || 'http://localhost:3001/api';
+                const response = await fetch(`${apiURL}/auth/me`, {
                     credentials: 'include'
                 });
                 
@@ -127,7 +133,8 @@
 
         async function logout() {
             try {
-                await fetch('http://localhost:3001/api/auth/logout', {
+                const apiURL = window.API_URL || 'http://localhost:3001/api';
+                await fetch(`${apiURL}/auth/logout`, {
                     method: 'POST',
                     credentials: 'include'
                 });

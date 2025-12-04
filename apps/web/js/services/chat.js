@@ -1,7 +1,7 @@
 // Chat Service
 export class ChatService {
     constructor() {
-        this.baseURL = 'http://localhost:3001/api';
+        this.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
         this.socket = null;
     }
 
@@ -11,8 +11,9 @@ export class ChatService {
         }
 
         // Import socket.io-client dynamically
+        const socketURL = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace('/api', '');
         import('https://cdn.socket.io/4.7.4/socket.io.esm.min.js').then(io => {
-            this.socket = io.default('http://localhost:3001');
+            this.socket = io.default(socketURL);
             this.setupSocketListeners();
         });
 

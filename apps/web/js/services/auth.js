@@ -22,7 +22,7 @@ export class AuthService {
             if (response.status === 429) {
                 // Try to reset rate limit and retry once
                 try {
-                    await fetch('http://localhost:3001/api/reset-rate-limit', { method: 'POST' });
+                    await fetch(`${API_BASE_URL}/reset-rate-limit`, { method: 'POST' });
                     console.log('Rate limit reset, retrying login...');
                     // Retry the login request
                     const retryResponse = await fetch(`${this.baseURL}/auth/login`, {

@@ -70,7 +70,8 @@ export class AdminDashboardController {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             
-            const response = await fetch('http://localhost:3001/api/admin/dashboard/stats', {
+            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/dashboard/stats`, {
                 headers: headers,
                 credentials: 'include'
             });
@@ -93,7 +94,8 @@ export class AdminDashboardController {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             
-            const response = await fetch('http://localhost:3001/api/admin/orders?limit=5', {
+            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/orders?limit=5`, {
                 headers: headers,
                 credentials: 'include'
             });
@@ -118,7 +120,8 @@ export class AdminDashboardController {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             
-            const response = await fetch(`http://localhost:3001/api/admin/orders/${orderId}`, {
+            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/orders/${orderId}`, {
                 headers: headers,
                 credentials: 'include'
             });
@@ -151,7 +154,8 @@ export class AdminDashboardController {
                 headers['Authorization'] = `Bearer ${authToken}`;
             }
             
-            const response = await fetch(`http://localhost:3001/api/admin/orders/${orderId}`, {
+            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/orders/${orderId}`, {
                 headers: headers,
                 credentials: 'include'
             });
@@ -199,7 +203,8 @@ export class AdminDashboardController {
                 notes: data.notes || ''
             };
             
-            const response = await fetch(`http://localhost:3001/api/admin/orders/${this.currentOrderId}/status`, {
+            const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/orders/${this.currentOrderId}/status`, {
                 method: 'PATCH',
                 headers: headers,
                 credentials: 'include',
