@@ -237,14 +237,29 @@
         </div>
     </footer>
 
-    <!-- Set API URL - Update dengan URL backend Railway yang sebenarnya -->
+    <!-- Set API URL - Menggunakan environment variable atau URL dinamis -->
     <script>
-        // Production: Ganti dengan URL backend Railway
+        // Production: Gunakan environment variable atau construct dari hostname
         // Development: Akan pakai localhost dari config.js
         const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-        window.VITE_API_URL = isProduction 
-            ? 'https://laundry-online-production.up.railway.app/api'  // URL backend Railway
-            : 'http://localhost:3001/api';
+        
+        // Cek environment variable dulu (di-inject saat build)
+        let apiUrl = '%VITE_API_URL%';
+        
+        // Jika masih placeholder, gunakan URL dinamis
+        if (apiUrl === '%VITE_API_URL%' || !apiUrl || apiUrl === '') {
+            if (isProduction) {
+                // Jika backend di Vercel yang sama, gunakan path /api
+                // Atau jika terpisah, bisa di-set via environment variable di Vercel
+                const hostname = window.location.hostname;
+                // Default: asumsikan backend di subdomain atau path yang sama
+                apiUrl = `https://${hostname}/api`;
+            } else {
+                apiUrl = 'http://localhost:3001/api';
+            }
+        }
+        
+        window.VITE_API_URL = apiUrl;
     </script>
     <script type="module" src="js/controllers/AppController.js"></script>
 </body>

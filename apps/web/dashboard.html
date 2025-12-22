@@ -84,9 +84,36 @@
     </main>
 
     <script type="module">
-        // Set API URL from environment variable
-        const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3001/api';
-        window.API_URL = API_URL;
+        // Set API URL - Menggunakan environment variable atau URL dinamis
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        
+        // Cek environment variable dulu (di-inject saat build)
+        let apiUrl = '%VITE_API_URL%';
+        
+        // Jika masih placeholder, gunakan URL dinamis atau fallback
+        if (apiUrl === '%VITE_API_URL%' || !apiUrl || apiUrl === '') {
+            // Try import.meta.env (Vite)
+            try {
+                if (import.meta.env?.VITE_API_URL) {
+                    apiUrl = import.meta.env.VITE_API_URL;
+                }
+            } catch (e) {
+                // import.meta.env not available
+            }
+            
+            // Jika masih belum ada, gunakan URL dinamis
+            if (!apiUrl || apiUrl === '%VITE_API_URL%') {
+                if (isProduction) {
+                    const hostname = window.location.hostname;
+                    apiUrl = `https://${hostname}/api`;
+                } else {
+                    apiUrl = 'http://localhost:3001/api';
+                }
+            }
+        }
+        
+        window.API_URL = apiUrl;
+        window.VITE_API_URL = apiUrl; // Set juga untuk kompatibilitas
         
         // Import ChatService for notifications
         import { ChatService } from './js/services/chat.js';

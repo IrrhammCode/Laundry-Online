@@ -279,25 +279,79 @@ curl -X POST http://localhost:3001/api/auth/register \
 
 ## Deployment
 
-### Production Setup
-1. Set `NODE_ENV=production`
-2. Use a production database
-3. Configure proper SMTP settings
-4. Set secure JWT secrets
-5. Use a reverse proxy (nginx)
-6. Enable HTTPS
+### Deploy to Vercel
 
-### Environment Variables for Production
-```env
-NODE_ENV=production
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-JWT_SECRET=your-production-secret
-SMTP_HOST=your-smtp-host
-SMTP_USER=your-email
-SMTP_PASS=your-password
-FRONTEND_URL=https://your-frontend-domain.com
-```
+This project is configured for deployment on Vercel with Supabase as the database.
+
+#### 1. Deploy Backend API
+
+1. **Create a new Vercel project for the API:**
+   ```bash
+   cd apps/api
+   vercel
+   ```
+
+2. **Set Environment Variables in Vercel Dashboard:**
+   - Go to your Vercel project settings > Environment Variables
+   - Add the following variables:
+   ```env
+   NODE_ENV=production
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   JWT_SECRET=your-production-secret
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=your-email@gmail.com
+   SMTP_PASS=your-app-password
+   SMTP_FROM=Laundry System <your-email@gmail.com>
+   FRONTEND_URL=https://your-frontend-domain.vercel.app
+   ```
+
+3. **Deploy:**
+   ```bash
+   vercel --prod
+   ```
+
+4. **Note the API URL:** After deployment, Vercel will provide a URL like `https://your-api-project.vercel.app`
+
+#### 2. Deploy Frontend
+
+1. **Create a new Vercel project for the Frontend:**
+   ```bash
+   cd apps/web
+   vercel
+   ```
+
+2. **Set Environment Variables in Vercel Dashboard:**
+   ```env
+   VITE_API_URL=https://your-api-project.vercel.app/api
+   ```
+
+3. **Deploy:**
+   ```bash
+   vercel --prod
+   ```
+
+#### 3. Update CORS Configuration
+
+Make sure your backend API allows requests from your frontend domain. The backend is already configured to accept requests from any `*.vercel.app` domain, but you can also set `FRONTEND_URL` to your specific frontend URL.
+
+#### 4. Verify Deployment
+
+- Frontend: `https://your-frontend-project.vercel.app`
+- API: `https://your-api-project.vercel.app/api`
+- Admin: `https://your-frontend-project.vercel.app/admin/login.html`
+
+### Important Notes
+
+- **Backend and Frontend are separate Vercel projects** - Deploy them separately
+- **Environment Variables** - Make sure `VITE_API_URL` in frontend points to your backend API URL
+- **CORS** - Backend automatically allows `*.vercel.app` domains
+- **Build Script** - The `vercel-build.js` script will automatically inject `VITE_API_URL` into HTML files during build
+
+### Alternative: Single Vercel Project
+
+If you want to deploy both frontend and backend in a single Vercel project, you'll need to configure `vercel.json` at the root to route `/api/*` to the backend and everything else to the frontend.
 
 ## Contributing
 

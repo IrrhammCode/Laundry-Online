@@ -189,11 +189,23 @@
     </div>
 
     <script>
-        // Set API URL
+        // Set API URL - Menggunakan environment variable atau URL dinamis
         const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-        window.VITE_API_URL = isProduction 
-            ? 'https://laundry-online-production.up.railway.app/api'
-            : 'http://localhost:3001/api';
+        
+        // Cek environment variable dulu (di-inject saat build)
+        let apiUrl = '%VITE_API_URL%';
+        
+        // Jika masih placeholder, gunakan URL dinamis
+        if (apiUrl === '%VITE_API_URL%' || !apiUrl || apiUrl === '') {
+            if (isProduction) {
+                const hostname = window.location.hostname;
+                apiUrl = `https://${hostname}/api`;
+            } else {
+                apiUrl = 'http://localhost:3001/api';
+            }
+        }
+        
+        window.VITE_API_URL = apiUrl;
     </script>
     <script type="module" src="../../js/controllers/admin/AdminDashboardController.js"></script>
 </body>
