@@ -82,14 +82,20 @@ const corsOptions = {
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.warn('CORS blocked origin:', origin);
-      console.warn('Allowed origins:', allowedOrigins);
+      // Log for debugging but allow in production (more permissive)
+      console.warn('CORS: Origin not in allowed list:', origin);
+      console.warn('CORS: Allowed origins:', allowedOrigins);
+      // Allow anyway for Vercel deployments (more permissive)
+      if (origin.includes('.vercel.app')) {
+        console.log('CORS: Allowing Vercel deployment:', origin);
+        return callback(null, true);
+      }
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
 app.use(cors(corsOptions));

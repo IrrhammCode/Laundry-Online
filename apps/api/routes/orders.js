@@ -22,12 +22,28 @@ const router = express.Router();
 // FR-14/15: Get Services (for price calculation)
 router.get('/services', async (req, res) => {
   try {
+    console.log('GET /api/orders/services - Request received');
+    
+    // Check if database is connected
+    if (!db) {
+      console.error('Database connection not available');
+      return res.status(500).json({
+        ok: false,
+        error: 'Database connection not available'
+      });
+    }
+
     const { data: services, error } = await db
       .from('services')
       .select('id, name, base_price, unit, description')
       .order('name');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Database error:', error);
+      throw error;
+    }
+
+    console.log('Services fetched successfully:', services?.length || 0);
 
     res.json({
       ok: true,
@@ -35,9 +51,16 @@ router.get('/services', async (req, res) => {
     });
   } catch (error) {
     console.error('Get services error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint
+    });
     res.status(500).json({
       ok: false,
-      error: 'Failed to fetch services'
+      error: 'Failed to fetch services',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
