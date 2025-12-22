@@ -136,6 +136,28 @@
         </div>
     </div>
 
+    <!-- Set API URL - Menggunakan environment variable atau hardcoded backend URL -->
+    <script>
+        // Production: Gunakan environment variable atau hardcoded backend URL
+        // Development: Akan pakai localhost dari config.js
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        
+        // Cek environment variable dulu (di-inject saat build)
+        let apiUrl = '%VITE_API_URL%';
+        
+        // Jika masih placeholder, gunakan hardcoded backend URL
+        if (apiUrl === '%VITE_API_URL%' || !apiUrl || apiUrl === '') {
+            if (isProduction) {
+                // Backend URL yang sudah di-deploy
+                apiUrl = 'https://laundry-online-fix.vercel.app/api';
+            } else {
+                apiUrl = 'http://localhost:3001/api';
+            }
+        }
+        
+        window.VITE_API_URL = apiUrl;
+        console.log('API URL set to:', apiUrl);
+    </script>
     <script type="module" src="../../js/controllers/admin/AdminOrdersController.js"></script>
 </body>
 </html>
