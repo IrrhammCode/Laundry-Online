@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Complaint - Laundry & Dry Clean</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar" id="navbar">
+            <!-- Navbar akan di-render oleh AppController -->
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>Submit Complaint</h1>
+                <p>Kami peduli dengan pengalaman Anda. Silakan sampaikan keluhan atau masukan Anda.</p>
+            </div>
+
+            <div class="form-container">
+                <form id="complaintForm">
+                    <div class="form-group">
+                        <label for="order_id">Order ID (Opsional)</label>
+                        <select id="order_id" name="order_id">
+                            <option value="">-- Pilih Order (Opsional) --</option>
+                            <!-- Options akan diisi oleh JavaScript -->
+                        </select>
+                        <small>Pilih order terkait jika keluhan berkaitan dengan order tertentu</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject <span class="required">*</span></label>
+                        <input type="text" id="subject" name="subject" required 
+                               placeholder="Masukkan subjek keluhan" minlength="5" maxlength="255">
+                        <small>Minimal 5 karakter, maksimal 255 karakter</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Message <span class="required">*</span></label>
+                        <textarea id="message" name="message" rows="6" required 
+                                  placeholder="Jelaskan keluhan atau masukan Anda secara detail" 
+                                  minlength="10" maxlength="2000"></textarea>
+                        <small>Minimal 10 karakter, maksimal 2000 karakter</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="window.history.back()">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Submit Complaint
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        window.VITE_API_URL = isProduction 
+            ? 'https://laundry-online-production.up.railway.app/api'
+            : 'http://localhost:3001/api';
+    </script>
+    <script type="module" src="js/controllers/AppController.js"></script>
+    <script type="module" src="js/controllers/ComplaintController.js"></script>
+</body>
+</html>
+

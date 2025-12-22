@@ -12,20 +12,25 @@ A comprehensive web application for managing laundry and dry cleaning services w
 - **Real-time Chat** - Chat with admin support
 - **Order History** - View past orders and their status
 - **Profile Management** - Update personal information
-- **Payment Integration** - QRIS and bank transfer payment options
+- **Payment Integration** - QRIS (mock) and bank transfer payment options
+- **Delivery Method Selection** - Choose self-pickup or delivery
+- **Custom Email Notifications** - Use registered email or custom email for notifications
+- **Order Reviews** - Submit reviews for completed orders
 
 ### Admin Features
 - **Dashboard** - Overview of business statistics and recent orders
-- **Order Management** - View and update order statuses
+- **Order Management** - View and update order statuses, approve pickup orders
 - **Service Management** - Add, edit, and delete laundry services
 - **Customer Support** - Chat with customers about their orders
-- **Analytics** - Revenue and order statistics
+- **Analytics** - Revenue and order statistics with charts
+- **Notifications** - Receive notifications for new orders and updates
+- **Review Management** - View customer reviews for orders
 
 ## Tech Stack
 
 ### Backend
 - **Node.js** with Express.js
-- **MySQL** database with mysql2
+- **Supabase** (PostgreSQL) database
 - **Socket.IO** for real-time chat
 - **JWT** for authentication
 - **bcrypt** for password hashing
@@ -40,7 +45,7 @@ A comprehensive web application for managing laundry and dry cleaning services w
 
 ### Prerequisites
 - Node.js (v14 or higher)
-- MySQL (v8.0 or higher)
+- Supabase account (free tier available)
 - npm or yarn
 
 ### 1. Clone the Repository
@@ -63,25 +68,29 @@ cd ../web
 npm install
 ```
 
-### 3. Database Setup
-1. Create a MySQL database named `laundry_db`
-2. Update the database connection in `env.example` and rename it to `.env`
-3. Run the database migration:
+### 3. Database Setup (Supabase)
+1. Create a new project on [Supabase](https://supabase.com)
+2. Get your Supabase URL and Service Role Key from Project Settings > API
+3. Run the SQL schema in Supabase SQL Editor:
+   - Copy the contents of `apps/api/scripts/supabase-schema.sql`
+   - Paste and run in Supabase SQL Editor
+4. Or use the migration script:
 ```bash
 cd apps/api
-npm run migrate
+node scripts/run-migration.js
 ```
 
 ### 4. Environment Configuration
-Create a `.env` file in the `apps/api` directory with the following variables:
+Create a `.env` file in the root directory with the following variables:
 
 ```env
 # Server Configuration
 PORT=3001
 NODE_ENV=development
 
-# Database Configuration
-DATABASE_URL=mysql://root:password@localhost:3306/laundry_db
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-here
@@ -118,18 +127,6 @@ npm run dev
 
 ### 6. Access the Application
 
-#### Quick Start (No Database Required)
-```bash
-# Run the mock version (no database setup needed)
-.\start-mock.bat
-```
-
-#### With Database
-```bash
-# Setup database first, then run
-npm run dev
-```
-
 **Access URLs:**
 - **Frontend**: http://localhost:3000
 - **API**: http://localhost:3001
@@ -149,6 +146,8 @@ After running the migration, you'll have these demo accounts for testing:
 - **Password**: admin123
 - **Features**: Manage orders, update status, service management
 
+**Note**: Courier role has been removed. All delivery operations are handled by admin.
+
 ## API Endpoints
 
 ### Authentication
@@ -161,27 +160,38 @@ After running the migration, you'll have these demo accounts for testing:
 - `GET /api/auth/me` - Get current user
 
 ### Orders
-- `GET /api/orders/services` - Get available services
+- `GET /api/orders/services` - Get available services (public)
+- `GET /api/orders/recommendations` - Get recommended packages
 - `POST /api/orders` - Create new order
 - `GET /api/orders/me` - Get user orders
 - `GET /api/orders/:id` - Get order details
+- `PATCH /api/orders/:id/choose-delivery` - Choose delivery method (SELF_PICKUP or DELIVERY)
+- `POST /api/orders/:id/pay-qris` - Mock QRIS payment
 - `POST /api/orders/:orderId/payment/confirm` - Confirm payment
 
 ### Admin
 - `GET /api/admin/orders` - Get all orders
 - `GET /api/admin/orders/:id` - Get order details
 - `PATCH /api/admin/orders/:id/status` - Update order status
+- `PATCH /api/admin/orders/:id/approve` - Approve pickup order
+- `PATCH /api/admin/orders/:id/confirm-delivery` - Confirm delivery (after washing)
 - `GET /api/admin/services` - Get services
 - `POST /api/admin/services` - Create service
 - `PUT /api/admin/services/:id` - Update service
 - `DELETE /api/admin/services/:id` - Delete service
 - `GET /api/admin/dashboard/stats` - Get dashboard statistics
+- `GET /api/admin/notifications` - Get admin notifications
+- `GET /api/admin/reviews` - Get all reviews
 
 ### Chat & Notifications
 - `GET /api/chat/orders/:orderId/messages` - Get chat messages
 - `POST /api/chat/orders/:orderId/messages` - Send message
-- `GET /api/chat/notifications` - Get notifications
+- `GET /api/chat/notifications` - Get user notifications
 - `PATCH /api/chat/notifications/:id/read` - Mark notification as read
+
+### Reviews
+- `POST /api/reviews` - Submit review for completed order
+- `GET /api/reviews/order/:orderId` - Get review for specific order
 
 ## Project Structure
 
@@ -210,11 +220,13 @@ laundry-dry-clean/
 ### Tables
 - **users** - User accounts (customers, admins)
 - **services** - Available laundry services
-- **orders** - Customer orders
+- **orders** - Customer orders (with status flow: DIPESAN → PESANAN_DIJEMPUT → DIAMBIL → DICUCI → MENUNGGU_KONFIRMASI_DELIVERY → MENUNGGU_PEMBAYARAN_DELIVERY → MENUNGGU_AMBIL_SENDIRI → DIKIRIM → SELESAI)
 - **order_items** - Items within each order
 - **payments** - Payment records
 - **messages** - Chat messages
 - **notifications** - System notifications
+- **reviews** - Customer reviews for orders
+- **complaints** - Customer complaints
 
 ## Features Implementation
 
@@ -247,8 +259,10 @@ laundry-dry-clean/
 ### Database Migrations
 ```bash
 cd apps/api
-node scripts/migrate.js
+node scripts/run-migration.js
 ```
+
+**Note**: Migration scripts are in `apps/api/scripts/` but are excluded from git. For setup, use Supabase SQL Editor or the migration script.
 
 ### Testing API Endpoints
 Use the provided Postman collection or test with curl:
@@ -276,11 +290,13 @@ curl -X POST http://localhost:3001/api/auth/register \
 ### Environment Variables for Production
 ```env
 NODE_ENV=production
-DATABASE_URL=mysql://user:password@host:port/database
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=your-production-secret
 SMTP_HOST=your-smtp-host
 SMTP_USER=your-email
 SMTP_PASS=your-password
+FRONTEND_URL=https://your-frontend-domain.com
 ```
 
 ## Contributing

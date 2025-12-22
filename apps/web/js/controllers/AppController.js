@@ -23,6 +23,16 @@ export class AppController {
         await this.checkAuth();
         this.setupEventListeners();
         await this.loadServices();
+        
+        // Load notifications if user is authenticated
+        try {
+            const user = await this.authService.getCurrentUser();
+            if (user) {
+                await this.loadNotifications();
+            }
+        } catch (error) {
+            // User not authenticated, skip notifications
+        }
     }
 
     async checkAuth() {
@@ -31,12 +41,91 @@ export class AppController {
             if (user) {
                 this.view.showUserNav(user);
                 this.view.hideAuthNav();
+                // Load notifications after auth check (only for customer)
+                if (user.role === 'CUSTOMER') {
+                    await this.loadNotifications();
+                }
             } else {
+                // User not logged in - show auth buttons, hide user nav
                 this.view.showAuthNav();
                 this.view.hideUserNav();
             }
         } catch (error) {
-            console.log('User not authenticated');
+            // User not authenticated - this is normal for public pages
+            // Just show auth buttons, don't redirect
+            console.log('User not authenticated - showing public view');
+            this.view.showAuthNav();
+            this.view.hideUserNav();
+        }
+    }
+
+    /**
+     * Load notifications
+     */
+    async loadNotifications() {
+        try {
+            const result = await this.chatService.getUnreadCount();
+            if (result.ok) {
+                this.view.updateNotificationBadge(result.data.unreadCount || 0);
+            }
+        } catch (error) {
+            console.error('Failed to load notification count:', error);
+        }
+    }
+
+    /**
+     * Load notification list for dropdown
+     */
+    async loadNotificationList() {
+        try {
+            const result = await this.chatService.getNotifications(1, 10);
+            if (result.ok) {
+                this.view.renderNotifications(result.data.notifications || []);
+            }
+        } catch (error) {
+            console.error('Failed to load notifications:', error);
+            const list = document.getElementById('notificationList');
+            if (list) {
+                list.innerHTML = '<div class="notification-error">Failed to load notifications</div>';
+            }
+        }
+    }
+
+    /**
+     * Mark notification as read
+     */
+    async markNotificationAsRead(notificationId) {
+        try {
+            await this.chatService.markNotificationAsRead(notificationId);
+            // Reload notifications
+            await this.loadNotifications();
+            await this.loadNotificationList();
+        } catch (error) {
+            console.error('Failed to mark notification as read:', error);
+        }
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    async markAllNotificationsAsRead() {
+        try {
+            const result = await this.chatService.getNotifications(1, 100);
+            if (result.ok) {
+                const notifications = result.data.notifications || [];
+                const unreadNotifications = notifications.filter(n => !n.sent_at);
+                
+                // Mark each unread notification
+                for (const notif of unreadNotifications) {
+                    await this.chatService.markNotificationAsRead(notif.id);
+                }
+                
+                // Reload notifications
+                await this.loadNotifications();
+                await this.loadNotificationList();
+            }
+        } catch (error) {
+            console.error('Failed to mark all as read:', error);
         }
     }
 
@@ -270,6 +359,46 @@ export class AppController {
     }
 
     setupEventListeners() {
+        // Notification button
+        const notificationBtn = document.getElementById('notificationBtn');
+        if (notificationBtn) {
+            notificationBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.view.toggleNotificationDropdown();
+                // Load notifications when dropdown opens
+                if (document.getElementById('notificationDropdown')?.classList.contains('show')) {
+                    this.loadNotificationList();
+                }
+            });
+        }
+
+        // Mark all as read button
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', () => {
+                this.markAllNotificationsAsRead();
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('notificationDropdown');
+            const btn = document.getElementById('notificationBtn');
+            if (dropdown && btn && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+                this.view.hideNotificationDropdown();
+            }
+        });
+
+        // Handle notification item clicks
+        document.addEventListener('click', (e) => {
+            const notificationItem = e.target.closest('.notification-item');
+            if (notificationItem) {
+                const notificationId = notificationItem.dataset.id;
+                if (notificationId) {
+                    this.markNotificationAsRead(notificationId);
+                }
+            }
+        });
         this.view.setupEventListeners({
             onLogin: (e) => this.handleLogin(e),
             onRegister: (e) => this.handleRegister(e),

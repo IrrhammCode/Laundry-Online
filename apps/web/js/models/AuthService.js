@@ -172,14 +172,23 @@ export class AuthService {
                 }
             }
         } catch (error) {
-            console.error('Error getCurrentUser from API:', error);
+            // Error is normal if user is not authenticated - don't throw, just return null
+            console.log('User not authenticated (this is normal for public pages)');
         }
 
         // Fallback to localStorage
         const userInfo = localStorage.getItem('userInfo');
         if (userInfo) {
-            return JSON.parse(userInfo);
+            try {
+                return JSON.parse(userInfo);
+            } catch (parseError) {
+                // Invalid JSON in localStorage - clear it
+                localStorage.removeItem('userInfo');
+                return null;
+            }
         }
+        
+        // No user found - return null (this is normal for public pages)
         return null;
     }
 }

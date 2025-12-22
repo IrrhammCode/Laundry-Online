@@ -1,17 +1,22 @@
 // Profile Controller - MVC Pattern (Sesuai DPPL)
 import { AuthService } from '../models/AuthService.js';
+import { ChatService } from '../services/chat.js';
 import { ProfileView } from '../views/ProfileView.js';
 
 export class ProfileController {
     constructor() {
         // Model layer - Sesuai DPPL
         this.authService = new AuthService();
+        this.chatService = new ChatService();
         
         // View layer
         this.view = new ProfileView();
         
         // Business state
         this.currentUser = null;
+        this.currentOrderId = null;
+        this.notificationsPage = 1;
+        this.chatHistory = [];
         
         this.init();
     }
@@ -20,19 +25,64 @@ export class ProfileController {
         await this.checkAuth();
         await this.loadProfile();
         this.setupEventListeners();
+        
+        // Load notifications count for badge
+        await this.loadNotificationCount();
+        
+        // Setup tab switching
+        this.setupTabs();
     }
 
     async checkAuth() {
         try {
             const user = await this.authService.getCurrentUser();
             if (user) {
+                // Only CUSTOMER can access this page
+                if (user.role !== 'CUSTOMER') {
+                    if (user.role === 'ADMIN') {
+                        this.view.redirect('admin/dashboard.html');
+                    } else {
+                        this.view.redirect('index.html');
+                    }
+                    return;
+                }
                 this.currentUser = user;
                 this.view.showUserNav(user);
             } else {
-                this.view.redirect('index.html');
+                const userInfo = localStorage.getItem('userInfo');
+                if (userInfo) {
+                    const parsedUser = JSON.parse(userInfo);
+                    if (parsedUser.role !== 'CUSTOMER') {
+                        if (parsedUser.role === 'ADMIN') {
+                            this.view.redirect('admin/dashboard.html');
+                        } else {
+                            this.view.redirect('index.html');
+                        }
+                        return;
+                    }
+                    this.currentUser = parsedUser;
+                    this.view.showUserNav(parsedUser);
+                } else {
+                    this.view.redirect('index.html');
+                }
             }
         } catch (error) {
-            this.view.redirect('index.html');
+            const userInfo = localStorage.getItem('userInfo');
+            if (userInfo) {
+                const parsedUser = JSON.parse(userInfo);
+                if (parsedUser.role !== 'CUSTOMER') {
+                    if (parsedUser.role === 'ADMIN') {
+                        this.view.redirect('admin/dashboard.html');
+                    } else {
+                        this.view.redirect('index.html');
+                    }
+                    return;
+                }
+                this.currentUser = parsedUser;
+                this.view.showUserNav(parsedUser);
+            } else {
+                this.view.redirect('index.html');
+            }
         }
     }
 
@@ -130,8 +180,198 @@ export class ProfileController {
         this.view.setupEventListeners({
             onProfileUpdate: (e) => this.handleProfileUpdate(e),
             onCancel: () => this.loadProfile(),
-            onLogout: () => this.logout()
+            onLogout: () => this.logout(),
+            onNotificationClick: () => this.loadNotificationList(),
+            onMarkAllRead: () => this.markAllNotificationsAsRead(),
+            onChatModalClose: () => {
+                this.currentOrderId = null;
+                this.view.hideChatModal();
+            },
+            onSendMessage: () => this.sendMessage(),
+            onRefreshChat: () => this.refreshChat()
         });
+    }
+
+    setupTabs() {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+
+                // Remove active class from all tabs
+                tabButtons.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                // Add active class to clicked tab
+                btn.classList.add('active');
+                document.getElementById(`${targetTab}Tab`).classList.add('active');
+
+                // Load content based on tab
+                if (targetTab === 'notifications') {
+                    this.loadNotifications();
+                } else if (targetTab === 'chat') {
+                    this.loadChatHistory();
+                }
+            });
+        });
+    }
+
+    async loadNotificationCount() {
+        try {
+            const result = await this.chatService.getUnreadCount();
+            if (result.ok) {
+                this.view.updateNotificationBadge(result.data.unreadCount || 0);
+            }
+        } catch (error) {
+            console.error('Load notification count error:', error);
+        }
+    }
+
+    async loadNotificationList() {
+        try {
+            const result = await this.chatService.getNotifications(1, 10);
+            if (result.ok) {
+                this.view.renderNotifications(result.data.notifications || []);
+            }
+        } catch (error) {
+            console.error('Load notification list error:', error);
+        }
+    }
+
+    async loadNotifications(page = 1) {
+        try {
+            this.notificationsPage = page;
+            this.view.showNotificationsLoading();
+
+            const result = await this.chatService.getNotifications(page, 10);
+            if (result.ok) {
+                this.view.renderNotifications(result.data.notifications || []);
+                this.view.updateNotificationsPagination(result.data.pagination || {});
+            } else {
+                this.view.showNotificationsError(result.error || 'Failed to load notifications');
+            }
+        } catch (error) {
+            console.error('Load notifications error:', error);
+            this.view.showNotificationsError('Failed to load notifications');
+        }
+    }
+
+    async markAllNotificationsAsRead() {
+        try {
+            const result = await this.chatService.getNotifications(1, 100);
+            if (result.ok) {
+                const notifications = result.data.notifications || [];
+                const unreadNotifications = notifications.filter(n => !n.sent_at);
+                
+                for (const notif of unreadNotifications) {
+                    await this.chatService.markNotificationAsRead(notif.id);
+                }
+                
+                await this.loadNotificationCount();
+                await this.loadNotifications(this.notificationsPage);
+            }
+        } catch (error) {
+            console.error('Mark all as read error:', error);
+        }
+    }
+
+    async loadChatHistory() {
+        try {
+            this.view.showChatHistoryLoading();
+
+            // Get user orders first
+            const { OrderService } = await import('../services/order.js');
+            const orderService = new OrderService();
+            const ordersResult = await orderService.getUserOrders(1, 50);
+
+            if (ordersResult.ok) {
+                const orders = ordersResult.data.orders || [];
+                
+                // Load chat for each order
+                const chatHistory = [];
+                for (const order of orders) {
+                    try {
+                        const chatResult = await this.chatService.getMessages(order.id);
+                        if (chatResult.ok && chatResult.data.messages && chatResult.data.messages.length > 0) {
+                            chatHistory.push({
+                                order: order,
+                                messages: chatResult.data.messages,
+                                lastMessage: chatResult.data.messages[chatResult.data.messages.length - 1]
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`Error loading chat for order ${order.id}:`, error);
+                    }
+                }
+
+                this.view.renderChatHistory(chatHistory);
+            } else {
+                this.view.showChatHistoryError('Failed to load orders');
+            }
+        } catch (error) {
+            console.error('Load chat history error:', error);
+            this.view.showChatHistoryError('Failed to load chat history');
+        }
+    }
+
+    async openChat(orderId) {
+        this.currentOrderId = orderId;
+        
+        try {
+            // Get order detail
+            const { OrderService } = await import('../services/order.js');
+            const orderService = new OrderService();
+            const orderResult = await orderService.getOrderDetail(orderId);
+            
+            if (orderResult.ok) {
+                this.view.showChatModal(orderResult.data.order);
+                await this.loadChatMessages(orderId);
+            }
+        } catch (error) {
+            console.error('Open chat error:', error);
+        }
+    }
+
+    async loadChatMessages(orderId) {
+        try {
+            const result = await this.chatService.getMessages(orderId);
+            if (result.ok) {
+                const currentUserId = this.currentUser ? this.currentUser.id : null;
+                this.view.renderChat(result.data.messages || [], currentUserId);
+            }
+        } catch (error) {
+            console.error('Load chat messages error:', error);
+        }
+    }
+
+    async sendMessage() {
+        const message = this.view.getChatInput();
+        if (!message || !this.currentOrderId) return;
+
+        try {
+            this.view.showLoading();
+            const result = await this.chatService.sendMessageAPI(this.currentOrderId, message);
+            
+            if (result.ok) {
+                this.view.clearChatInput();
+                await this.loadChatMessages(this.currentOrderId);
+            } else {
+                this.view.showAlert(result.error || 'Failed to send message', 'error');
+            }
+        } catch (error) {
+            console.error('Send message error:', error);
+            this.view.showAlert('Failed to send message', 'error');
+        } finally {
+            this.view.hideLoading();
+        }
+    }
+
+    async refreshChat() {
+        if (this.currentOrderId) {
+            await this.loadChatMessages(this.currentOrderId);
+        }
     }
 
     async logout() {

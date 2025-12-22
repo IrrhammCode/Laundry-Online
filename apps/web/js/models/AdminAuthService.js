@@ -40,7 +40,14 @@ export class AdminAuthService {
             // 3. Jika benar, buat session admin
             if (result.ok && result.data.token) {
                 localStorage.setItem('authToken', result.data.token);
-                localStorage.setItem('adminInfo', JSON.stringify(result.data.admin));
+                // Store admin info as userInfo for consistency
+                if (result.data.admin) {
+                    localStorage.setItem('userInfo', JSON.stringify(result.data.admin));
+                    localStorage.setItem('adminInfo', JSON.stringify(result.data.admin));
+                } else if (result.data.user) {
+                    localStorage.setItem('userInfo', JSON.stringify(result.data.user));
+                    localStorage.setItem('adminInfo', JSON.stringify(result.data.user));
+                }
             }
 
             return result;

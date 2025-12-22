@@ -9,9 +9,9 @@ const router = express.Router();
 
 // Email transporter setup
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
+    port: parseInt(process.env.SMTP_PORT) || 587,
     secure: false,
     auth: {
       user: process.env.SMTP_USER,
@@ -45,12 +45,16 @@ router.post('/register', [
     // Query #6 DPPL: Cek apakah email sudah terdaftar
     // DPPL: SELECT COUNT(*) FROM user WHERE email = ?;
     // Implementasi: Menggunakan SELECT id untuk cek keberadaan (lebih efisien)
-    const [existingUsers] = await db.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
-    );
+    const { data: existingUsers, error: checkError } = await db
+      .from('users')
+      .select('id')
+      .eq('email', email);
 
-    if (existingUsers.length > 0) {
+    if (checkError) {
+      throw checkError;
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
       return res.status(409).json({
         ok: false,
         error: 'Email sudah terdaftar. Silakan gunakan email lain atau login dengan email ini.',
@@ -62,14 +66,26 @@ router.post('/register', [
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
-    const [result] = await db.execute(
-      'INSERT INTO users (name, email, password_hash, phone, address, role) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, passwordHash, phone || null, address || null, 'CUSTOMER']
-    );
+    const { data: newUser, error: insertError } = await db
+      .from('users')
+      .insert({
+        name,
+        email,
+        password_hash: passwordHash,
+        phone: phone || null,
+        address: address || null,
+        role: 'CUSTOMER'
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw insertError;
+    }
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: result.insertId, role: 'CUSTOMER' },
+      { userId: newUser.id, role: 'CUSTOMER' },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -86,12 +102,12 @@ router.post('/register', [
       ok: true,
       data: {
         user: {
-          id: result.insertId,
-          name,
-          email,
-          phone,
-          address,
-          role: 'CUSTOMER'
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: newUser.phone,
+          address: newUser.address,
+          role: newUser.role
         },
         token
       }
@@ -164,19 +180,20 @@ router.post('/login', [
     // Query #4 DPPL: Cari data user berdasarkan email
     // DPPL: SELECT * FROM user WHERE email = ?;
     // Implementasi: Menggunakan users (bukan user) dan hanya mengambil kolom yang diperlukan
-    const [users] = await db.execute(
-      'SELECT id, name, email, password_hash, role, phone, address FROM users WHERE email = ?',
-      [email]
-    );
+    const { data: users, error: userError } = await db
+      .from('users')
+      .select('id, name, email, password_hash, role, phone, address')
+      .eq('email', email)
+      .single();
 
-    if (users.length === 0) {
+    if (userError || !users) {
       return res.status(401).json({
         ok: false,
         error: 'Invalid credentials'
       });
     }
 
-    const user = users[0];
+    const user = users;
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
@@ -312,19 +329,20 @@ router.post('/forgot', [
 
     // Query #20 DPPL: Cek apakah email terdaftar untuk reset password
     // DPPL: SELECT * FROM user WHERE email = ?;
-    const [users] = await db.execute(
-      'SELECT id, name FROM users WHERE email = ?',
-      [email]
-    );
+    const { data: users, error: userError } = await db
+      .from('users')
+      .select('id, name')
+      .eq('email', email)
+      .single();
 
-    if (users.length === 0) {
+    if (userError || !users) {
       return res.status(404).json({
         ok: false,
         error: 'Email not found'
       });
     }
 
-    const user = users[0];
+    const user = users;
 
     // Generate reset token
     const resetToken = jwt.sign(
@@ -398,10 +416,14 @@ router.post('/reset', [
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Update password
-    await db.execute(
-      'UPDATE users SET password_hash = ? WHERE id = ?',
-      [passwordHash, decoded.userId]
-    );
+    const { error: updateError } = await db
+      .from('users')
+      .update({ password_hash: passwordHash })
+      .eq('id', decoded.userId);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     res.json({
       ok: true,
@@ -482,12 +504,13 @@ router.get('/me', async (req, res) => {
     }
     
     // Regular user lookup from database
-    const [users] = await db.execute(
-      'SELECT id, name, email, role, phone, address FROM users WHERE id = ?',
-      [decoded.userId]
-    );
+    const { data: users, error: userError } = await db
+      .from('users')
+      .select('id, name, email, role, phone, address')
+      .eq('id', decoded.userId)
+      .single();
 
-    if (users.length === 0) {
+    if (userError || !users) {
       return res.status(401).json({
         ok: false,
         error: 'User not found'
@@ -496,7 +519,7 @@ router.get('/me', async (req, res) => {
 
     res.json({
       ok: true,
-      data: { user: users[0] }
+      data: { user: users }
     });
 
   } catch (error) {

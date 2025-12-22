@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - Admin Dashboard</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-user-shield"></i>
+                <span>Admin Dashboard</span>
+            </div>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="orders.html" class="nav-link">Orders</a>
+                <a href="services.html" class="nav-link">Services</a>
+                <a href="reports.html" class="nav-link active">Reports</a>
+                <div class="nav-user">
+                    <span id="adminName"></span>
+                    <button class="btn btn-outline" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>Reports & Analytics</h1>
+                <p>Comprehensive business insights and analytics</p>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="filter-section" style="margin-bottom: 2rem; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <label for="startDate">Start Date:</label>
+                        <input type="date" id="startDate" class="form-control" style="max-width: 200px;">
+                    </div>
+                    <div>
+                        <label for="endDate">End Date:</label>
+                        <input type="date" id="endDate" class="form-control" style="max-width: 200px;">
+                    </div>
+                    <div>
+                        <label for="periodSelect">Period:</label>
+                        <select id="periodSelect" class="form-control" style="max-width: 150px;">
+                            <option value="day">Daily</option>
+                            <option value="week">Weekly</option>
+                            <option value="month" selected>Monthly</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="applyFilterBtn">
+                        <i class="fas fa-filter"></i> Apply Filter
+                    </button>
+                    <button class="btn btn-outline" id="exportBtn">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="stats-grid" id="summaryCards">
+                <!-- Summary cards will be loaded dynamically -->
+            </div>
+
+            <!-- Charts Section -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>Revenue Trend</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>Sales by Service</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="serviceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>Orders by Status</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Customers -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>Top Customers</h2>
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Customer Name</th>
+                                <th>Email</th>
+                                <th>Total Orders</th>
+                                <th>Total Spent</th>
+                                <th>Last Order</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topCustomersTable">
+                            <tr>
+                                <td colspan="5" class="empty-message">
+                                    <div class="loading">
+                                        <div class="spinner"></div>
+                                        <p>Loading...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        window.VITE_API_URL = isProduction 
+            ? 'https://laundry-online-production.up.railway.app/api'
+            : 'http://localhost:3001/api';
+    </script>
+    <script type="module" src="../../js/controllers/admin/AdminReportsController.js"></script>
+</body>
+</html>
+

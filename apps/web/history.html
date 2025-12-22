@@ -15,12 +15,30 @@
                 <i class="fas fa-tshirt"></i>
                 <span>Laundry & Dry Clean</span>
             </div>
-            <div class="nav-menu">
+            <div class="nav-menu" id="navMenu">
                 <a href="index.html" class="nav-link">Home</a>
                 <a href="order.html" class="nav-link">New Order</a>
                 <a href="history.html" class="nav-link active">My Orders</a>
                 <a href="profile.html" class="nav-link">Profile</a>
-                <div class="nav-user">
+                <div class="nav-user" id="navUser">
+                    <div class="notification-wrapper">
+                        <button class="notification-btn" id="notificationBtn" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        </button>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header">
+                                <h4>Notifications</h4>
+                                <button class="btn btn-sm btn-outline" id="markAllReadBtn">Mark all read</button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <div class="notification-loading">Loading notifications...</div>
+                            </div>
+                            <div class="notification-footer">
+                                <a href="profile.html#notifications">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
                     <span id="userName"></span>
                     <button class="btn btn-outline" id="logoutBtn">Logout</button>
                 </div>
@@ -34,6 +52,13 @@
             <div class="page-header">
                 <h1>My Orders</h1>
                 <p>Track your laundry orders and chat with support</p>
+                <div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 5px; border-left: 4px solid #007bff;">
+                    <strong><i class="fas fa-comments"></i> Chat dengan Support:</strong>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                        Klik tombol <strong>"Chat"</strong> pada setiap order card di bawah untuk berkomunikasi dengan support atau kurir tentang pesanan Anda.
+                        Anda juga dapat melihat semua riwayat chat di halaman <a href="profile.html" style="color: #007bff; font-weight: 600;">Profile</a> → Tab "Chat History".
+                    </p>
+                </div>
             </div>
 
             <!-- Filters -->
@@ -91,10 +116,15 @@
             <div class="modal-body">
                 <div class="chat-container">
                     <div class="chat-header">
-                        <h4>Order #<span id="chatOrderId"></span></h4>
-                        <div class="chat-status">
-                            <span class="status-badge" id="chatOrderStatus"></span>
+                        <div class="chat-header-info">
+                            <h4>Order #<span id="chatOrderId"></span></h4>
+                            <div class="chat-status">
+                                <span class="status-badge" id="chatOrderStatus"></span>
+                            </div>
                         </div>
+                        <button type="button" class="btn btn-sm btn-outline" id="refreshChatBtn" title="Refresh Messages">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
                     </div>
                     <div class="chat-messages" id="chatMessages">
                         <!-- Messages will be loaded dynamically -->
@@ -106,6 +136,83 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Method Selection Modal -->
+    <div class="modal" id="deliveryMethodModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Pilih Metode Pengambilan</h3>
+                <button class="modal-close" id="deliveryMethodModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem; color: #666;">Pesanan Anda sudah siap! Pilih metode pengambilan:</p>
+                <div class="delivery-options" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button type="button" class="delivery-option-btn" id="selfPickupBtn" style="padding: 1.5rem; border: 2px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; text-align: left; transition: all 0.3s;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 50px; height: 50px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                                <i class="fas fa-walking"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: #333;">Ambil Sendiri</h4>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">Ambil pesanan Anda langsung di lokasi kami</p>
+                                <p style="margin: 0.5rem 0 0 0; color: #28a745; font-weight: 600;">Gratis</p>
+                            </div>
+                        </div>
+                    </button>
+                    <button type="button" class="delivery-option-btn" id="deliveryBtn" style="padding: 1.5rem; border: 2px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; text-align: left; transition: all 0.3s;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 50px; height: 50px; background: #007bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: #333;">Dikirim</h4>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">Kami akan mengirimkan pesanan ke alamat Anda</p>
+                                <p style="margin: 0.5rem 0 0 0; color: #007bff; font-weight: 600;">Biaya tambahan: Rp 10.000</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-outline" id="cancelDeliveryMethodBtn">Batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal" id="reviewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Review Order</h3>
+                <button class="modal-close" id="reviewModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <input type="hidden" id="reviewOrderId" name="order_id">
+                    <div class="form-group">
+                        <label>Rating <span class="required">*</span></label>
+                        <div class="rating-input" id="ratingInput">
+                            <i class="fas fa-star" data-rating="1"></i>
+                            <i class="fas fa-star" data-rating="2"></i>
+                            <i class="fas fa-star" data-rating="3"></i>
+                            <i class="fas fa-star" data-rating="4"></i>
+                            <i class="fas fa-star" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" id="ratingValue" name="rating" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewComment">Comment (Optional)</label>
+                        <textarea id="reviewComment" name="comment" rows="4" 
+                                  placeholder="Bagikan pengalaman Anda..." maxlength="1000"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="cancelReviewBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

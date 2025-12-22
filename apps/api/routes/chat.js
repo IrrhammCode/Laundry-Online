@@ -11,12 +11,14 @@ router.get('/orders/:orderId/messages', async (req, res) => {
     const userId = req.user.id;
 
     // Verify user has access to this order
-    const [orders] = await db.execute(
-      'SELECT id FROM orders WHERE id = ? AND user_id = ?',
-      [orderId, userId]
-    );
+    const { data: orderData, error: orderError } = await db
+      .from('orders')
+      .select('id')
+      .eq('id', orderId)
+      .eq('user_id', userId)
+      .single();
 
-    if (orders.length === 0) {
+    if (orderError || !orderData) {
       return res.status(404).json({
         ok: false,
         error: 'Order not found or access denied'
@@ -24,15 +26,34 @@ router.get('/orders/:orderId/messages', async (req, res) => {
     }
 
     // Get messages
-    const [messages] = await db.execute(`
-      SELECT 
-        m.id, m.body, m.created_at,
-        u.name as sender_name, u.role as sender_role
-      FROM messages m
-      JOIN users u ON m.sender_id = u.id
-      WHERE m.order_id = ?
-      ORDER BY m.created_at ASC
-    `, [orderId]);
+    const { data: messagesData, error: messagesError } = await db
+      .from('messages')
+      .select('id, body, created_at, sender_id')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: true });
+
+    if (messagesError) throw messagesError;
+
+    // Get sender details for each message
+    const messages = await Promise.all(
+      (messagesData || []).map(async (msg) => {
+        const { data: senderData, error: senderErr } = await db
+          .from('users')
+          .select('name, role')
+          .eq('id', msg.sender_id)
+          .single();
+
+        if (senderErr) throw senderErr;
+
+        return {
+          id: msg.id,
+          body: msg.body,
+          created_at: msg.created_at,
+          sender_name: senderData.name,
+          sender_role: senderData.role
+        };
+      })
+    );
 
     res.json({
       ok: true,
@@ -67,12 +88,14 @@ router.post('/orders/:orderId/messages', [
     const { message } = req.body;
 
     // Verify user has access to this order
-    const [orders] = await db.execute(
-      'SELECT id FROM orders WHERE id = ? AND user_id = ?',
-      [orderId, userId]
-    );
+    const { data: orderData, error: orderError } = await db
+      .from('orders')
+      .select('id')
+      .eq('id', orderId)
+      .eq('user_id', userId)
+      .single();
 
-    if (orders.length === 0) {
+    if (orderError || !orderData) {
       return res.status(404).json({
         ok: false,
         error: 'Order not found or access denied'
@@ -81,25 +104,35 @@ router.post('/orders/:orderId/messages', [
 
     // Save message (untuk chat support)
     // Catatan: Query ini untuk chat, bukan notifikasi sesuai Query #18 DPPL
-    const [result] = await db.execute(
-      'INSERT INTO messages (order_id, sender_id, body) VALUES (?, ?, ?)',
-      [orderId, userId, message]
-    );
+    const { data: newMessage, error: insertError } = await db
+      .from('messages')
+      .insert({
+        order_id: orderId,
+        sender_id: userId,
+        body: message
+      })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
 
     // Get sender info
-    const [users] = await db.execute(
-      'SELECT name, role FROM users WHERE id = ?',
-      [userId]
-    );
+    const { data: userData, error: userError } = await db
+      .from('users')
+      .select('name, role')
+      .eq('id', userId)
+      .single();
+
+    if (userError) throw userError;
 
     const messageData = {
-      id: result.insertId,
+      id: newMessage.id,
       orderId,
       senderId: userId,
-      senderName: users[0].name,
-      senderRole: users[0].role,
+      senderName: userData.name,
+      senderRole: userData.role,
       message,
-      timestamp: new Date()
+      timestamp: new Date(newMessage.created_at)
     };
 
     // Emit to all users in the order room
@@ -128,32 +161,32 @@ router.get('/notifications', async (req, res) => {
     const { page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
 
-    const [notifications] = await db.execute(`
-      SELECT 
-        n.id, n.type, n.payload_json, n.sent_at, n.channel, n.created_at,
-        o.id as order_id
-      FROM notifications n
-      JOIN orders o ON n.order_id = o.id
-      WHERE n.user_id = ?
-      ORDER BY n.created_at DESC
-      LIMIT ? OFFSET ?
-    `, [userId, parseInt(limit), parseInt(offset)]);
+    const { data: notifications, error: notifError } = await db
+      .from('notifications')
+      .select('id, type, payload_json, sent_at, channel, created_at, order_id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + parseInt(limit) - 1);
+
+    if (notifError) throw notifError;
 
     // Get total count
-    const [countResult] = await db.execute(
-      'SELECT COUNT(*) as total FROM notifications WHERE user_id = ?',
-      [userId]
-    );
+    const { count, error: countError } = await db
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (countError) throw countError;
 
     res.json({
       ok: true,
       data: {
-        notifications,
+        notifications: notifications || [],
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
-          total: countResult[0].total,
-          pages: Math.ceil(countResult[0].total / limit)
+          total: count || 0,
+          pages: Math.ceil((count || 0) / limit)
         }
       }
     });
@@ -174,12 +207,14 @@ router.patch('/notifications/:id/read', async (req, res) => {
     const userId = req.user.id;
 
     // Verify notification belongs to user
-    const [notifications] = await db.execute(
-      'SELECT id FROM notifications WHERE id = ? AND user_id = ?',
-      [notificationId, userId]
-    );
+    const { data: notifData, error: notifError } = await db
+      .from('notifications')
+      .select('id')
+      .eq('id', notificationId)
+      .eq('user_id', userId)
+      .single();
 
-    if (notifications.length === 0) {
+    if (notifError || !notifData) {
       return res.status(404).json({
         ok: false,
         error: 'Notification not found'
@@ -187,10 +222,12 @@ router.patch('/notifications/:id/read', async (req, res) => {
     }
 
     // Update notification
-    await db.execute(
-      'UPDATE notifications SET sent_at = NOW() WHERE id = ?',
-      [notificationId]
-    );
+    const { error: updateError } = await db
+      .from('notifications')
+      .update({ sent_at: new Date().toISOString() })
+      .eq('id', notificationId);
+
+    if (updateError) throw updateError;
 
     res.json({
       ok: true,
@@ -211,14 +248,17 @@ router.get('/notifications/unread-count', async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const [result] = await db.execute(
-      'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND sent_at IS NULL',
-      [userId]
-    );
+    const { count, error: countError } = await db
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('sent_at', null);
+
+    if (countError) throw countError;
 
     res.json({
       ok: true,
-      data: { unreadCount: result[0].count }
+      data: { unreadCount: count || 0 }
     });
 
   } catch (error) {

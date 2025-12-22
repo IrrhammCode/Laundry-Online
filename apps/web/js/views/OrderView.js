@@ -14,6 +14,45 @@ export class OrderView {
     }
 
     /**
+     * Render recommended packages
+     * @param {Array} packages - Array of package objects
+     */
+    renderRecommendedPackages(packages) {
+        const packagesSection = document.getElementById('recommendedPackagesSection');
+        const packagesGrid = document.getElementById('recommendedPackages');
+        
+        if (!packagesSection || !packagesGrid || packages.length === 0) return;
+        
+        packagesSection.style.display = 'block';
+        packagesGrid.innerHTML = packages.map(pkg => `
+            <div class="package-card">
+                <div class="package-badge">${pkg.badge}</div>
+                <h3>${pkg.name}</h3>
+                <p class="package-description">${pkg.description}</p>
+                <div class="package-services">
+                    ${pkg.services.map(s => `
+                        <div class="package-service-item">
+                            <i class="fas fa-check"></i>
+                            <span>${s.name} (Rp ${parseFloat(s.base_price).toLocaleString('id-ID')}/${s.unit})</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="package-pricing">
+                    ${pkg.discount > 0 ? `
+                        <div class="package-price-original">Rp ${pkg.original_price.toLocaleString('id-ID')}</div>
+                        <div class="package-discount">${pkg.discount}% OFF</div>
+                    ` : ''}
+                    <div class="package-price-final">Rp ${pkg.final_price.toLocaleString('id-ID')}</div>
+                </div>
+                <button type="button" class="btn btn-primary btn-block" 
+                        onclick="window.orderController.selectPackage('${pkg.id}', ${JSON.stringify(pkg.services).replace(/"/g, '&quot;')})">
+                    <i class="fas fa-shopping-cart"></i> Add Package
+                </button>
+            </div>
+        `).join('');
+    }
+
+    /**
      * Render services list
      * @param {Array} services - Array of service objects
      * @param {Function} onAddService - Callback when service is added
@@ -149,9 +188,17 @@ export class OrderView {
         if (!form) return null;
 
         const formData = new FormData(form);
+        const emailOption = formData.get('email_option');
+        let notificationEmail = null;
+        
+        if (emailOption === 'custom') {
+            notificationEmail = formData.get('notification_email');
+        }
+        
         return {
             pickup_method: formData.get('pickup_method'),
-            notes: formData.get('notes')
+            notes: formData.get('notes'),
+            notification_email: notificationEmail
         };
     }
 

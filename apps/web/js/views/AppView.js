@@ -152,6 +152,148 @@ export class AppView {
     }
 
     /**
+     * Update notification badge count
+     * @param {number} count - Unread notification count
+     */
+    updateNotificationBadge(count) {
+        const badge = document.getElementById('notificationBadge');
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    }
+
+    /**
+     * Render notifications list
+     * @param {Array} notifications - Array of notification objects
+     */
+    renderNotifications(notifications) {
+        const list = document.getElementById('notificationList');
+        if (!list) return;
+
+        if (notifications.length === 0) {
+            list.innerHTML = '<div class="notification-empty">No notifications</div>';
+            return;
+        }
+
+        list.innerHTML = notifications.map(notif => {
+            // Handle payload_json - could be string or object
+            let payload = {};
+            try {
+                if (notif.payload_json) {
+                    payload = typeof notif.payload_json === 'string' 
+                        ? JSON.parse(notif.payload_json) 
+                        : notif.payload_json;
+                }
+            } catch (e) {
+                console.error('Failed to parse payload_json:', e);
+                payload = {};
+            }
+            const isRead = notif.sent_at !== null;
+            const orderId = notif.order_id || payload.orderId || '';
+            
+            return `
+                <div class="notification-item ${isRead ? 'read' : 'unread'}" data-id="${notif.id}">
+                    <div class="notification-icon">
+                        <i class="fas fa-${this.getNotificationIcon(notif.type)}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">${this.getNotificationTitle(notif.type, payload)}</div>
+                        <div class="notification-message">${this.getNotificationMessage(notif.type, payload)}</div>
+                        <div class="notification-time">${this.formatNotificationTime(notif.created_at)}</div>
+                    </div>
+                    ${orderId ? `<a href="history.html" class="notification-link">View Order</a>` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Get notification icon based on type
+     */
+    getNotificationIcon(type) {
+        const icons = {
+            'status_update': 'sync-alt',
+            'payment_confirmed': 'check-circle',
+            'order_created': 'shopping-cart',
+            'message': 'comment'
+        };
+        return icons[type] || 'bell';
+    }
+
+    /**
+     * Get notification title
+     */
+    getNotificationTitle(type, payload) {
+        const titles = {
+            'status_update': 'Order Status Updated',
+            'payment_confirmed': 'Payment Confirmed',
+            'order_created': 'Order Created',
+            'message': 'New Message'
+        };
+        return titles[type] || 'Notification';
+    }
+
+    /**
+     * Get notification message
+     */
+    getNotificationMessage(type, payload) {
+        if (payload.isi_pesan) return payload.isi_pesan;
+        if (payload.message) return payload.message;
+        
+        const messages = {
+            'status_update': `Order #${payload.orderId || ''} status has been updated`,
+            'payment_confirmed': `Payment for order #${payload.orderId || ''} has been confirmed`,
+            'order_created': `Your order #${payload.orderId || ''} has been created`,
+            'message': 'You have a new message'
+        };
+        return messages[type] || 'You have a new notification';
+    }
+
+    /**
+     * Format notification time
+     */
+    formatNotificationTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now - date;
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days < 7) return `${days}d ago`;
+        return date.toLocaleDateString();
+    }
+
+    /**
+     * Toggle notification dropdown
+     */
+    toggleNotificationDropdown() {
+        const dropdown = document.getElementById('notificationDropdown');
+        if (dropdown) {
+            dropdown.classList.toggle('show');
+        }
+    }
+
+    /**
+     * Hide notification dropdown
+     */
+    hideNotificationDropdown() {
+        const dropdown = document.getElementById('notificationDropdown');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+    }
+
+    /**
      * Toggle mobile navigation
      */
     toggleMobileNav() {

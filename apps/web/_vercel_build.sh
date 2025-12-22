@@ -7,3 +7,4 @@ find . -name "*.html" -type f -exec sed -i "s|%VITE_API_URL%|${VITE_API_URL:-htt
 
 echo "Environment variables injected successfully"
 
+

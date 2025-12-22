@@ -32,11 +32,16 @@ class App {
                 this.ui.showUserNav(user);
                 this.ui.hideAuthNav();
             } else {
+                // User not logged in - show auth buttons, hide user nav
                 this.ui.showAuthNav();
                 this.ui.hideUserNav();
             }
         } catch (error) {
-            console.log('User not authenticated');
+            // User not authenticated - this is normal for public pages
+            // Just show auth buttons, don't redirect
+            console.log('User not authenticated - showing public view');
+            this.ui.showAuthNav();
+            this.ui.hideUserNav();
         }
     }
 

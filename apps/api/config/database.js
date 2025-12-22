@@ -1,55 +1,53 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
+const fs = require('fs');
 
-// Parse database URL or use individual connection parameters
-const getConnectionConfig = () => {
-  if (process.env.DATABASE_URL) {
-    // Parse DATABASE_URL format: mysql://user:password@host:port/database
-    const url = new URL(process.env.DATABASE_URL);
-    return {
-      host: url.hostname,
-      port: url.port || 3306,
-      user: url.username,
-      password: url.password,
-      database: url.pathname.slice(1), // Remove leading slash
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    };
+// Try to load .env from root directory
+const rootEnvPath = path.resolve(__dirname, '../../.env');
+if (fs.existsSync(rootEnvPath)) {
+  require('dotenv').config({ path: rootEnvPath });
+} else {
+  // Fallback to current directory
+  require('dotenv').config();
+}
+
+// Supabase configuration
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase configuration. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
+  process.exit(1);
+}
+
+// Create Supabase client with service role key for admin operations
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
   }
-
-  // Fallback to individual environment variables
-  return {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'password',
-    database: process.env.DB_NAME || 'laundry_db',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-  };
-};
-
-// Create connection pool
-const pool = mysql.createPool(getConnectionConfig());
+});
 
 // Test connection
 const testConnection = async () => {
   try {
-    const connection = await pool.getConnection();
-    console.log('✅ Database connected successfully');
-    connection.release();
+    // Test query to verify connection
+    const { data, error } = await supabase.from('users').select('count').limit(1);
+    if (error && error.code !== 'PGRST116') { // PGRST116 = table doesn't exist (expected on first run)
+      throw error;
+    }
+    console.log('✅ Supabase connected successfully');
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    process.exit(1);
+    if (error.code === 'PGRST116') {
+      console.log('⚠️  Supabase connected, but tables not yet created. Run migration script.');
+    } else {
+      console.error('❌ Supabase connection failed:', error.message);
+      process.exit(1);
+    }
   }
 };
 
 // Initialize connection test
 testConnection();
 
-module.exports = pool;
-
-
-
+module.exports = supabase;

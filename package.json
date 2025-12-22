@@ -7,7 +7,9 @@
     "api:dev": "cd apps/api && npm run dev",
     "web:dev": "cd apps/web && npm run dev",
     "dev": "concurrently \"npm run api:dev\" \"npm run web:dev\"",
-    "install:all": "npm install && cd apps/api && npm install && cd ../web && npm install"
+    "install:all": "npm install && cd apps/api && npm install && cd ../web && npm install",
+    "build": "node vercel-build.js",
+    "build:check": "node vercel-build.js && cd apps/api && node -c server.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

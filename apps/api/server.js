@@ -5,13 +5,25 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+
+// Try to load .env from root directory
+const rootEnvPath = path.resolve(__dirname, '../../.env');
+if (fs.existsSync(rootEnvPath)) {
+  require('dotenv').config({ path: rootEnvPath });
+} else {
+  // Fallback to current directory
+  require('dotenv').config();
+}
 
 const db = require('./config/database');
 const authRoutes = require('./routes/auth');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const chatRoutes = require('./routes/chat');
+const complaintRoutes = require('./routes/complaints');
+const reviewRoutes = require('./routes/reviews');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
@@ -103,22 +115,50 @@ app.use(generalLimiter);
 
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
+// Public route for services (before auth middleware)
+app.get('/api/orders/services', async (req, res) => {
+  try {
+    const { data: services, error } = await db
+      .from('services')
+      .select('id, name, base_price, unit, description')
+      .order('name');
+
+    if (error) throw error;
+
+    res.json({
+      ok: true,
+      data: { services: services || [] }
+    });
+  } catch (error) {
+    console.error('Get services error:', error);
+    res.status(500).json({
+      ok: false,
+      error: 'Failed to fetch services'
+    });
+  }
+});
+// Protected routes
 app.use('/api/orders', authenticateToken, orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/chat', authenticateToken, chatRoutes);
+app.use('/api/complaints', complaintRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Public routes (no authentication required)
 app.get('/api/services', async (req, res) => {
   try {
     console.log('GET /api/services - Request received from:', req.headers.origin);
-    const [services] = await db.execute(
-      'SELECT id, name, base_price, unit, description FROM services ORDER BY name'
-    );
+    const { data: services, error } = await db
+      .from('services')
+      .select('id, name, base_price, unit, description')
+      .order('name');
 
-    console.log('GET /api/services - Services found:', services.length);
+    if (error) throw error;
+
+    console.log('GET /api/services - Services found:', services?.length || 0);
     res.json({
       ok: true,
-      data: { services }
+      data: { services: services || [] }
     });
   } catch (error) {
     console.error('Get services error:', error);
@@ -175,18 +215,25 @@ io.on('connection', (socket) => {
       const { orderId, message, senderId } = data;
       
       // Save message to database
-      const [result] = await db.execute(
-        'INSERT INTO messages (order_id, sender_id, body) VALUES (?, ?, ?)',
-        [orderId, senderId, message]
-      );
+      const { data: newMessage, error: insertError } = await db
+        .from('messages')
+        .insert({
+          order_id: orderId,
+          sender_id: senderId,
+          body: message
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
 
       // Broadcast to all users in the order room
       io.to(`order:${orderId}`).emit('message:new', {
-        id: result.insertId,
+        id: newMessage.id,
         orderId,
         senderId,
         message,
-        timestamp: new Date()
+        timestamp: new Date(newMessage.created_at)
       });
     } catch (error) {
       console.error('Error handling chat message:', error);

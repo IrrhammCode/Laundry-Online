@@ -73,9 +73,32 @@ export class ChatService {
         this.currentUserId = userId;
     }
 
+    getAuthToken() {
+        // Try to get token from cookie first
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'token') {
+                return value;
+            }
+        }
+        // Fallback to localStorage
+        return localStorage.getItem('authToken');
+    }
+
     async getMessages(orderId) {
         try {
+            const token = this.getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${this.baseURL}/chat/orders/${orderId}/messages`, {
+                headers,
                 credentials: 'include'
             });
 
@@ -89,11 +112,18 @@ export class ChatService {
 
     async sendMessageAPI(orderId, message) {
         try {
+            const token = this.getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${this.baseURL}/chat/orders/${orderId}/messages`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 credentials: 'include',
                 body: JSON.stringify({ message })
             });
@@ -108,7 +138,17 @@ export class ChatService {
 
     async getNotifications(page = 1, limit = 20) {
         try {
+            const token = this.getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${this.baseURL}/chat/notifications?page=${page}&limit=${limit}`, {
+                headers,
                 credentials: 'include'
             });
 
@@ -122,8 +162,18 @@ export class ChatService {
 
     async markNotificationAsRead(notificationId) {
         try {
+            const token = this.getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${this.baseURL}/chat/notifications/${notificationId}/read`, {
                 method: 'PATCH',
+                headers,
                 credentials: 'include'
             });
 
@@ -137,7 +187,17 @@ export class ChatService {
 
     async getUnreadCount() {
         try {
+            const token = this.getAuthToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${this.baseURL}/chat/notifications/unread-count`, {
+                headers,
                 credentials: 'include'
             });
 

@@ -13,25 +13,51 @@ export class AdminOrdersView {
 
     renderOrders(orders) {
         if (!this.ordersTableBody) return;
+        
+        if (orders.length === 0) {
+            this.ordersTableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty-message">
+                        <i class="fas fa-inbox"></i><br>
+                        No orders found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
         this.ordersTableBody.innerHTML = '';
 
         orders.forEach(order => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>#${order.id}</td>
+                <td><strong>#${order.id}</strong></td>
                 <td>
-                    <div>
-                        <strong>${order.customer_name}</strong><br>
-                        <small>${order.phone}</small>
+                    <div class="customer-info">
+                        <span class="customer-name">${order.customer_name || 'N/A'}</span>
+                        <span class="customer-phone">${order.phone || '-'}</span>
                     </div>
                 </td>
-                <td>${this.getItemsCount(order)}</td>
-                <td>Rp ${parseFloat(order.price_total).toLocaleString()}</td>
-                <td><span class="status status-${order.status.toLowerCase()}">${order.status}</span></td>
+                <td>
+                    <span class="items-count">${this.getItemsCount(order)}</span>
+                </td>
+                <td>
+                    <span class="total-price">Rp ${parseFloat(order.price_total || 0).toLocaleString('id-ID')}</span>
+                </td>
+                <td>
+                    <span class="status status-${order.status.toLowerCase().replace(/_/g, '-')}">${this.formatOrderStatus(order.status)}</span>
+                </td>
                 <td>${this.formatDate(order.created_at)}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="window.adminOrdersController.viewOrder(${order.id})">View</button>
-                    ${this.getStatusButton(order.status, order.id)}
+                    <div class="table-actions">
+                        <button class="btn btn-sm btn-primary" onclick="window.adminOrdersController.viewOrder(${order.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="window.adminOrdersController.openChat(${order.id})" title="Chat with Customer">
+                            <i class="fas fa-comments"></i> Chat
+                        </button>
+                        ${this.getStatusButton(order.status, order.id)}
+                    </div>
                 </td>
             `;
             this.ordersTableBody.appendChild(row);
@@ -39,39 +65,65 @@ export class AdminOrdersView {
     }
 
     getItemsCount(order) {
+        let count = 0;
+        
         // Check if items_count exists (from backend query)
         if (order.items_count !== undefined && order.items_count !== null) {
-            return `${order.items_count} item(s)`;
+            count = order.items_count;
         }
         // Check if items array exists
-        if (order.items && Array.isArray(order.items) && order.items.length > 0) {
-            return `${order.items.length} item(s)`;
+        else if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+            count = order.items.length;
         }
         // Check if order_items exists
-        if (order.order_items && Array.isArray(order.order_items) && order.order_items.length > 0) {
-            return `${order.order_items.length} item(s)`;
+        else if (order.order_items && Array.isArray(order.order_items) && order.order_items.length > 0) {
+            count = order.order_items.length;
         }
-        // Default fallback
-        return '0 item(s)';
+        
+        return count > 0 ? `${count} item${count > 1 ? 's' : ''}` : '0 items';
     }
 
     formatDate(dateString) {
         if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        } catch (error) {
+            return 'Invalid Date';
+        }
+    }
+    
+    formatOrderStatus(status) {
+        return this.ui.formatOrderStatus(status);
     }
 
     getStatusButton(currentStatus, orderId) {
         const statusButtons = {
-            'DIPESAN': `<button class="btn btn-sm btn-success" onclick="window.adminOrdersController.updateStatus(${orderId}, 'DIJEMPUT')">Pickup</button>`,
-            'DIJEMPUT': `<button class="btn btn-sm btn-warning" onclick="window.adminOrdersController.updateStatus(${orderId}, 'DICUCI')">Wash</button>`,
-            'DICUCI': `<button class="btn btn-sm btn-info" onclick="window.adminOrdersController.updateStatus(${orderId}, 'DIKIRIM')">Ship</button>`,
-            'DIKIRIM': `<button class="btn btn-sm btn-success" onclick="window.adminOrdersController.updateStatus(${orderId}, 'SELESAI')">Complete</button>`,
-            'SELESAI': `<span class="text-success">Completed</span>`
+            'DIPESAN': `<button class="btn btn-sm btn-primary" onclick="window.adminOrdersController.viewOrder(${orderId})" title="View Order">
+                <i class="fas fa-eye"></i> View
+            </button>`,
+            'PESANAN_DIJEMPUT': `<button class="btn btn-sm btn-warning" onclick="window.adminOrdersController.updateStatus(${orderId}, 'DIAMBIL')" title="Mark as Taken">
+                <i class="fas fa-hand-holding"></i> Taken
+            </button>`,
+            'DIAMBIL': `<button class="btn btn-sm btn-info" onclick="window.adminOrdersController.updateStatus(${orderId}, 'DICUCI')" title="Mark as Washing">
+                <i class="fas fa-soap"></i> Wash
+            </button>`,
+            'DICUCI': `<button class="btn btn-sm btn-primary" onclick="window.adminOrdersController.viewOrder(${orderId})" title="View Order">
+                <i class="fas fa-eye"></i> View
+            </button>`,
+            'MENUNGGU_AMBIL_SENDIRI': `<button class="btn btn-sm btn-success" onclick="window.adminOrdersController.updateStatus(${orderId}, 'SELESAI')" title="Mark as Completed">
+                <i class="fas fa-check-circle"></i> Complete
+            </button>`,
+            'DIKIRIM': `<button class="btn btn-sm btn-success" onclick="window.adminOrdersController.updateStatus(${orderId}, 'SELESAI')" title="Mark as Completed">
+                <i class="fas fa-check-circle"></i> Complete
+            </button>`,
+            'SELESAI': `<span class="status status-selesai" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-check"></i> Completed
+            </span>`
         };
         return statusButtons[currentStatus] || '';
     }
@@ -132,6 +184,47 @@ export class AdminOrdersView {
         this.ui.hideModal('orderDetailModal');
     }
 
+    showChatModal() {
+        this.ui.showModal('chatModal');
+    }
+
+    hideChatModal() {
+        this.ui.hideModal('chatModal');
+    }
+
+    renderChat(messages, currentUserId) {
+        const chatMessages = document.getElementById('adminChatMessages');
+        if (!chatMessages) return;
+
+        if (messages.length === 0) {
+            chatMessages.innerHTML = '<p class="empty-message">No messages yet. Start a conversation!</p>';
+            return;
+        }
+
+        chatMessages.innerHTML = messages.map(msg => {
+            const isAdmin = msg.sender_role === 'ADMIN';
+            const isCurrentUser = msg.sender_id === currentUserId;
+            const messageClass = isCurrentUser ? 'sent' : 'received';
+            
+            return `
+                <div class="chat-message ${messageClass}">
+                    <div class="message-header">
+                        <strong>${msg.sender_name} ${isAdmin ? '(Admin)' : ''}</strong>
+                        <span class="message-time">${new Date(msg.created_at).toLocaleTimeString()}</span>
+                    </div>
+                    <div class="message-body">${msg.body}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    formatOrderStatus(status) {
+        return this.ui.formatOrderStatus(status);
+    }
+
     getStatusFilter() {
         const statusFilter = document.getElementById('statusFilter');
         return statusFilter ? statusFilter.value : '';
@@ -175,6 +268,11 @@ export class AdminOrdersView {
         const orderDetailModalClose = document.getElementById('orderDetailModalClose');
         if (orderDetailModalClose) {
             orderDetailModalClose.addEventListener('click', () => this.hideOrderDetailModal());
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn && callbacks.onLogout) {
+            logoutBtn.addEventListener('click', callbacks.onLogout);
         }
     }
 

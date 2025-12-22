@@ -15,9 +15,30 @@
                 <i class="fas fa-tshirt"></i>
                 <span>Laundry & Dry Clean</span>
             </div>
-            <div class="nav-menu">
+            <div class="nav-menu" id="navMenu">
                 <a href="index.html" class="nav-link">Home</a>
-                <div class="nav-user">
+                <a href="order.html" class="nav-link">New Order</a>
+                <a href="history.html" class="nav-link">My Orders</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <div class="nav-user" id="navUser">
+                    <div class="notification-wrapper">
+                        <button class="notification-btn" id="notificationBtn" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        </button>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header">
+                                <h4>Notifications</h4>
+                                <button class="btn btn-sm btn-outline" id="markAllReadBtn">Mark all read</button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <div class="notification-loading">Loading notifications...</div>
+                            </div>
+                            <div class="notification-footer">
+                                <a href="profile.html#notifications">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
                     <span id="userName">Loading...</span>
                     <button class="btn btn-outline" onclick="logout()">Logout</button>
                 </div>
@@ -48,6 +69,14 @@
                         <div class="action-buttons" id="actionButtons">
                             <!-- Action buttons will be populated based on user role -->
                         </div>
+                        <div style="margin-top: 1.5rem; padding: 1rem; background: #e7f3ff; border-radius: 5px; border-left: 4px solid #007bff;">
+                            <strong><i class="fas fa-info-circle"></i> Quick Access:</strong>
+                            <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0; font-size: 0.9rem;">
+                                <li><strong>Chat Support:</strong> Klik "Chat Support" di atas atau buka halaman <a href="history.html" style="color: #007bff;">My Orders</a> dan klik tombol "Chat" pada order yang ingin ditanyakan</li>
+                                <li><strong>Chat History:</strong> Lihat semua riwayat chat di halaman <a href="profile.html" style="color: #007bff;">Profile</a> → Tab "Chat History"</li>
+                                <li><strong>Notifications:</strong> Klik icon bell di navbar untuk melihat notifikasi terbaru</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -58,8 +87,179 @@
         // Set API URL from environment variable
         const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3001/api';
         window.API_URL = API_URL;
+        
+        // Import ChatService for notifications
+        import { ChatService } from './js/services/chat.js';
+        
+        let chatService = new ChatService();
+        
+        // Make chatService available globally
+        window.chatService = chatService;
+        
+        // Load notification count on page load
+        async function loadNotificationCount() {
+            if (!chatService) return;
+            
+            try {
+                const result = await chatService.getUnreadCount();
+                if (result.ok) {
+                    const count = result.data.unreadCount || 0;
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge) {
+                        if (count > 0) {
+                            badge.textContent = count > 99 ? '99+' : count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Load notification count error:', error);
+            }
+        }
+        
+        // Load notifications for dropdown
+        async function loadNotifications() {
+            if (!chatService) return;
+            
+            try {
+                const result = await chatService.getNotifications(1, 5);
+                if (result.ok) {
+                    const notifications = result.data.notifications || [];
+                    const list = document.getElementById('notificationList');
+                    if (list) {
+                        if (notifications.length === 0) {
+                            list.innerHTML = '<div class="notification-loading">No notifications</div>';
+                        } else {
+                            list.innerHTML = notifications.map(notif => {
+                                const payload = notif.payload_json ? JSON.parse(notif.payload_json) : {};
+                                const isRead = notif.sent_at !== null;
+                                const orderId = notif.order_id || payload.orderId || '';
+                                
+                                return `
+                                    <div class="notification-item ${isRead ? 'read' : 'unread'}" data-id="${notif.id}">
+                                        <div class="notification-icon">
+                                            <i class="fas fa-${getNotificationIcon(notif.type)}"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">${getNotificationTitle(notif.type, payload)}</div>
+                                            <div class="notification-message">${getNotificationMessage(notif.type, payload)}</div>
+                                            <div class="notification-time">${formatNotificationTime(notif.created_at)}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Load notifications error:', error);
+            }
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                'status_update': 'sync-alt',
+                'payment_confirmed': 'check-circle',
+                'order_created': 'shopping-cart',
+                'message': 'comment'
+            };
+            return icons[type] || 'bell';
+        }
+        
+        function getNotificationTitle(type, payload) {
+            const titles = {
+                'status_update': 'Order Status Updated',
+                'payment_confirmed': 'Payment Confirmed',
+                'order_created': 'Order Created',
+                'message': 'New Message'
+            };
+            return titles[type] || 'Notification';
+        }
+        
+        function getNotificationMessage(type, payload) {
+            if (payload.isi_pesan) return payload.isi_pesan;
+            if (payload.message) return payload.message;
+            
+            const messages = {
+                'status_update': `Order #${payload.orderId || ''} status has been updated`,
+                'payment_confirmed': `Payment for order #${payload.orderId || ''} has been confirmed`,
+                'order_created': `Your order #${payload.orderId || ''} has been created`,
+                'message': 'You have a new message'
+            };
+            return messages[type] || 'You have a new notification';
+        }
+        
+        function formatNotificationTime(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            return date.toLocaleDateString();
+        }
+        
+        // Setup notification dropdown
+        function setupNotificationDropdown() {
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            
+            if (notificationBtn && notificationDropdown) {
+                notificationBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    notificationDropdown.classList.toggle('show');
+                    loadNotifications();
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!notificationDropdown.contains(e.target) && !notificationBtn.contains(e.target)) {
+                        notificationDropdown.classList.remove('show');
+                    }
+                });
+            }
+            
+            // Mark all as read
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', async () => {
+                    if (!chatService) return;
+                    
+                    try {
+                        const result = await chatService.getNotifications(1, 100);
+                        if (result.ok) {
+                            const notifications = result.data.notifications || [];
+                            const unreadNotifications = notifications.filter(n => !n.sent_at);
+                            
+                            for (const notif of unreadNotifications) {
+                                await chatService.markNotificationAsRead(notif.id);
+                            }
+                            
+                            await loadNotificationCount();
+                            await loadNotifications();
+                        }
+                    } catch (error) {
+                        console.error('Mark all as read error:', error);
+                    }
+                });
+            }
+        }
+        
+        // Make functions available globally
+        window.loadNotificationCount = loadNotificationCount;
+        window.loadNotifications = loadNotifications;
+        window.setupNotificationDropdown = setupNotificationDropdown;
     </script>
     <script>
+        
         // Check if user is logged in
         async function checkAuth() {
             try {
@@ -90,11 +290,27 @@
                     
                     // Show action buttons based on role
                     showActionButtons(user.role);
+                    
+                    // Load notifications
+                    await loadNotificationCount();
+                    setupNotificationDropdown();
                 } else {
                     // Try to get user info from localStorage as fallback
                     const userInfo = localStorage.getItem('userInfo');
                     if (userInfo) {
                         const user = JSON.parse(userInfo);
+                        
+                        // Only CUSTOMER can access this dashboard page
+                        if (user.role !== 'CUSTOMER') {
+                            if (user.role === 'ADMIN') {
+                                window.location.href = 'admin/dashboard.html';
+                                return;
+                            } else {
+                                window.location.href = 'index.html';
+                                return;
+                            }
+                        }
+                        
                         document.getElementById('userName').textContent = user.name;
                         document.getElementById('userInfo').textContent = `Welcome, ${user.name}!`;
                         
@@ -109,6 +325,14 @@
                         
                         // Show action buttons based on role
                         showActionButtons(user.role);
+                        
+                        // Load notifications (only for customer)
+                        if (window.loadNotificationCount) {
+                            await window.loadNotificationCount();
+                        }
+                        if (window.setupNotificationDropdown) {
+                            window.setupNotificationDropdown();
+                        }
                     } else {
                         // Not logged in, redirect to home
                         window.location.href = 'index.html';
@@ -120,11 +344,31 @@
                 const userInfo = localStorage.getItem('userInfo');
                 if (userInfo) {
                     const user = JSON.parse(userInfo);
+                    
+                    // Only CUSTOMER can access this dashboard page
+                    if (user.role !== 'CUSTOMER') {
+                        if (user.role === 'ADMIN') {
+                            window.location.href = 'admin/dashboard.html';
+                            return;
+                        } else {
+                            window.location.href = 'index.html';
+                            return;
+                        }
+                    }
+                    
                     document.getElementById('userName').textContent = user.name;
                     document.getElementById('userInfo').textContent = `Welcome, ${user.name}!`;
                     
                     // Show action buttons based on role
                     showActionButtons(user.role);
+                    
+                    // Load notifications (only for customer)
+                    if (window.loadNotificationCount) {
+                        await window.loadNotificationCount();
+                    }
+                    if (window.setupNotificationDropdown) {
+                        window.setupNotificationDropdown();
+                    }
                 } else {
                     window.location.href = 'index.html';
                 }
@@ -152,6 +396,7 @@
         function showActionButtons(role) {
             const actionButtons = document.getElementById('actionButtons');
             
+            // Only show customer buttons
             if (role === 'CUSTOMER') {
                 actionButtons.innerHTML = `
                     <a href="order.html" class="btn btn-primary">
@@ -159,6 +404,9 @@
                     </a>
                     <a href="history.html" class="btn btn-outline">
                         <i class="fas fa-history"></i> View History
+                    </a>
+                    <a href="history.html" class="btn btn-outline" style="background: #28a745; color: white; border-color: #28a745;">
+                        <i class="fas fa-comments"></i> Chat Support
                     </a>
                     <a href="profile.html" class="btn btn-outline">
                         <i class="fas fa-user"></i> Profile

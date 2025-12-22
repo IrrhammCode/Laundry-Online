@@ -1,10 +1,12 @@
 // Admin Services Controller - MVC Pattern
 import { AuthService } from '../../services/auth.js';
+import { AdminServicesService } from '../../models/AdminServicesService.js';
 import { AdminServicesView } from '../../views/admin/AdminServicesView.js';
 
 export class AdminServicesController {
     constructor() {
         this.authService = new AuthService();
+        this.adminServicesService = new AdminServicesService();
         this.view = new AdminServicesView();
         
         this.services = [];
@@ -38,8 +40,8 @@ export class AdminServicesController {
                 localStorage.setItem('userInfo', JSON.stringify(user));
                 this.view.showUserNav(user);
             } else {
-                alert('Access Denied! Admin access required.');
-                this.view.redirect('../../index.html');
+                // Redirect to admin login page
+                this.view.redirect('login.html');
             }
         } catch (error) {
             console.error('Auth check error:', error);
@@ -50,11 +52,12 @@ export class AdminServicesController {
                 if (user && user.role === 'ADMIN') {
                     this.view.showUserNav(user);
                 } else {
-                    alert('Access Denied! Admin access required.');
-                    this.view.redirect('../../index.html');
+                    // Redirect to admin login page
+                    this.view.redirect('login.html');
                 }
             } else {
-                this.view.redirect('../../index.html');
+                // Redirect to admin login page
+                this.view.redirect('login.html');
             }
         }
     }
@@ -63,37 +66,13 @@ export class AdminServicesController {
         try {
             this.view.showLoading();
             
-            // Mock services data (in real app, fetch from API)
-            this.services = [
-                {
-                    id: 1,
-                    name: 'Regular Wash',
-                    description: 'Standard washing service for everyday clothes',
-                    price: 15000,
-                    duration: 24,
-                    status: 'ACTIVE'
-                },
-                {
-                    id: 2,
-                    name: 'Dry Clean',
-                    description: 'Professional dry cleaning for delicate fabrics',
-                    price: 25000,
-                    duration: 48,
-                    status: 'ACTIVE'
-                },
-                {
-                    id: 3,
-                    name: 'Express Wash',
-                    description: 'Fast washing service (same day)',
-                    price: 20000,
-                    duration: 6,
-                    status: 'ACTIVE'
-                }
-            ];
-
+            // Fetch services from API
+            this.services = await this.adminServicesService.getAllServices();
+            
             this.view.renderServices(this.services);
         } catch (error) {
-            this.view.showAlert('Failed to load services', 'error');
+            console.error('Load services error:', error);
+            this.view.showAlert(error.message || 'Failed to load services', 'error');
         } finally {
             this.view.hideLoading();
         }
@@ -104,33 +83,45 @@ export class AdminServicesController {
         this.view.showServiceModal(service);
     }
 
-    saveService() {
-        const serviceData = this.view.getServiceFormData();
-        if (!serviceData) return;
+    async saveService() {
+        try {
+            const serviceData = this.view.getServiceFormData();
+            if (!serviceData) return;
 
-        const processedData = {
-            name: serviceData.name,
-            description: serviceData.description,
-            price: parseInt(serviceData.price),
-            duration: parseInt(serviceData.duration),
-            status: serviceData.status
-        };
+            // Validate required fields
+            if (!serviceData.name || !serviceData.base_price || !serviceData.unit) {
+                this.view.showAlert('Please fill in all required fields', 'error');
+                return;
+            }
 
-        if (this.editingService) {
-            const index = this.services.findIndex(s => s.id === this.editingService.id);
-            this.services[index] = { ...this.editingService, ...processedData };
-            this.view.showAlert('Service updated successfully', 'success');
-        } else {
-            const newService = {
-                id: this.services.length + 1,
-                ...processedData
+            this.view.showLoading();
+
+            const processedData = {
+                name: serviceData.name.trim(),
+                description: serviceData.description ? serviceData.description.trim() : null,
+                base_price: parseFloat(serviceData.base_price),
+                unit: serviceData.unit.trim()
             };
-            this.services.push(newService);
-            this.view.showAlert('Service added successfully', 'success');
-        }
 
-        this.view.renderServices(this.services);
-        this.view.hideServiceModal();
+            if (this.editingService) {
+                // Update existing service
+                await this.adminServicesService.updateService(this.editingService.id, processedData);
+                this.view.showAlert('Service updated successfully', 'success');
+            } else {
+                // Create new service
+                const newService = await this.adminServicesService.createService(processedData);
+                this.view.showAlert('Service added successfully', 'success');
+            }
+
+            // Reload services from API
+            await this.loadServices();
+            this.view.hideServiceModal();
+        } catch (error) {
+            console.error('Save service error:', error);
+            this.view.showAlert(error.message || 'Failed to save service', 'error');
+        } finally {
+            this.view.hideLoading();
+        }
     }
 
     editService(serviceId) {
@@ -140,19 +131,52 @@ export class AdminServicesController {
         }
     }
 
-    deleteService(serviceId) {
-        if (confirm('Are you sure you want to delete this service?')) {
-            this.services = this.services.filter(s => s.id !== serviceId);
-            this.view.renderServices(this.services);
+    async deleteService(serviceId) {
+        if (!confirm('Are you sure you want to delete this service?')) {
+            return;
+        }
+
+        try {
+            this.view.showLoading();
+            
+            await this.adminServicesService.deleteService(serviceId);
+            
+            // Reload services from API
+            await this.loadServices();
             this.view.showAlert('Service deleted successfully', 'success');
+        } catch (error) {
+            console.error('Delete service error:', error);
+            this.view.showAlert(error.message || 'Failed to delete service', 'error');
+        } finally {
+            this.view.hideLoading();
         }
     }
 
     setupEventListeners() {
         this.view.setupEventListeners({
             onAddService: () => this.showServiceModal(),
-            onSaveService: () => this.saveService()
+            onSaveService: () => this.saveService(),
+            onLogout: () => this.logout()
         });
+    }
+
+    async logout() {
+        try {
+            await this.authService.logout();
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('adminInfo');
+            // Redirect to landing page
+            window.location.href = '../../index.html';
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Clear localStorage even if API call fails
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('adminInfo');
+            // Redirect to landing page
+            window.location.href = '../../index.html';
+        }
     }
 }
 

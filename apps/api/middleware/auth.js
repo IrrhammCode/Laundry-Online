@@ -28,19 +28,20 @@ const authenticateToken = async (req, res, next) => {
     }
     
     // Get user from database for regular users
-    const [users] = await db.execute(
-      'SELECT id, role, name, email, phone, address FROM users WHERE id = ?',
-      [decoded.userId]
-    );
+    const { data: userData, error: userError } = await db
+      .from('users')
+      .select('id, role, name, email, phone, address')
+      .eq('id', decoded.userId)
+      .single();
 
-    if (users.length === 0) {
+    if (userError || !userData) {
       return res.status(401).json({
         ok: false,
         error: 'User not found'
       });
     }
 
-    req.user = users[0];
+    req.user = userData;
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
@@ -72,6 +73,13 @@ const requireRole = (roles) => {
         ok: false,
         error: 'Authentication required'
       });
+    }
+
+    // Handle hardcoded admin
+    if (req.user.role === 'ADMIN' && req.user.id === 1) {
+      if (roles.includes('ADMIN')) {
+        return next();
+      }
     }
 
     if (!roles.includes(req.user.role)) {

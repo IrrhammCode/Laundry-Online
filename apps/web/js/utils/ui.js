@@ -56,10 +56,67 @@ export class UI {
         const authNav = document.getElementById('navAuth');
         const userNav = document.getElementById('navUser');
         const userName = document.getElementById('userName');
+        const navMenu = document.getElementById('navMenu');
         
         if (authNav) authNav.style.display = 'none';
         if (userNav) userNav.style.display = 'flex';
         if (userName) userName.textContent = user.name;
+        
+        // Update navbar links based on user role
+        if (navMenu && user.role) {
+            this.updateNavbarForRole(user.role, navMenu);
+        }
+    }
+    
+    updateNavbarForRole(role, navMenu) {
+        // Only update navbar for customer pages
+        // Courier and Admin have their own separate pages with different navbar structure
+        if (role === 'CUSTOMER') {
+            // Ensure notification wrapper is visible for customers
+            const notificationWrapper = navMenu.querySelector('.notification-wrapper');
+            if (!notificationWrapper) {
+                // Notification wrapper should already be in HTML for customer pages
+                // If missing, it means we're on a wrong page
+                console.warn('Notification wrapper not found for customer');
+            }
+            
+            // Ensure customer links are present
+            const links = {
+                'index.html': 'Home',
+                'order.html': 'New Order',
+                'history.html': 'My Orders',
+                'profile.html': 'Profile'
+            };
+            
+            // Check and add missing links
+            Object.entries(links).forEach(([href, text]) => {
+                if (!navMenu.querySelector(`a[href="${href}"]`)) {
+                    const link = document.createElement('a');
+                    link.href = href;
+                    link.className = 'nav-link';
+                    link.textContent = text;
+                    
+                    // Insert after home link or at the beginning
+                    const homeLink = navMenu.querySelector('a[href="index.html"]') || navMenu.querySelector('a[href="#home"]');
+                    if (homeLink && href !== 'index.html') {
+                        homeLink.insertAdjacentElement('afterend', link);
+                    } else if (!homeLink) {
+                        navMenu.insertBefore(link, navMenu.firstChild);
+                    }
+                }
+            });
+        } else if (role === 'COURIER' || role === 'ADMIN') {
+            // Remove notification wrapper for non-customer roles
+            const notificationWrapper = navMenu.querySelector('.notification-wrapper');
+            if (notificationWrapper) {
+                notificationWrapper.remove();
+            }
+            
+            // Redirect to appropriate page if on customer pages
+            if (window.location.pathname.includes('/admin/') === false && role === 'ADMIN') {
+                window.location.href = 'admin/dashboard.html';
+            }
+        }
     }
 
     hideUserNav() {
@@ -169,21 +226,81 @@ export class UI {
                     </div>
                 </div>
                 <div class="order-actions">
-                    <button class="btn btn-outline" onclick="viewOrder(${order.id})">View Details</button>
+                    ${order.status === 'MENUNGGU_KONFIRMASI_DELIVERY' ? `
+                    <button class="btn btn-warning" onclick="chooseDeliveryMethod(${order.id})" style="background: #ffc107; color: #000; border: none;">
+                        <i class="fas fa-truck"></i> Pilih Metode Pengambilan
+                    </button>
+                    ` : ''}
+                    ${order.status === 'MENUNGGU_PEMBAYARAN_DELIVERY' ? `
+                    <button class="btn btn-success" onclick="payQRIS(${order.id})" style="background: #28a745; color: #fff; border: none;">
+                        <i class="fas fa-qrcode"></i> Bayar QRIS
+                    </button>
+                    ` : ''}
+                    <button class="btn btn-outline" onclick="viewOrder(${order.id})">
+                        <i class="fas fa-eye"></i> View Details
+                    </button>
+                    <button class="btn btn-primary" onclick="openChat(${order.id})">
+                        <i class="fas fa-comments"></i> Chat
+                    </button>
+                    ${order.status === 'SELESAI' ? `
+                    <button class="btn btn-success" onclick="openReview(${order.id})">
+                        <i class="fas fa-star"></i> Review
+                    </button>
+                    ` : ''}
                 </div>
             </div>
         `).join('');
     }
 
     renderOrderDetail(order) {
+        // Check if order needs delivery method selection
+        const needsDeliverySelection = order.status === 'MENUNGGU_KONFIRMASI_DELIVERY';
+        const needsPayment = order.status === 'MENUNGGU_PEMBAYARAN_DELIVERY';
+        
         return `
             <div class="order-detail-container">
                 <div class="order-header">
                     <h2>Order #${order.id}</h2>
-                    <span class="status-badge status-${order.status.toLowerCase()}">
+                    <span class="status-badge status-${order.status.toLowerCase().replace(/_/g, '-')}">
                         ${this.formatOrderStatus(order.status)}
                     </span>
                 </div>
+                
+                ${needsDeliverySelection ? `
+                <div class="delivery-selection" style="background: #e3f2fd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0;"><i class="fas fa-truck"></i> Pilih Metode Pengambilan</h3>
+                    <p>Pesanan Anda sudah selesai dicuci. Silakan pilih metode pengambilan:</p>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button class="btn btn-success" onclick="window.historyController.chooseDelivery(${order.id}, 'SELF_PICKUP')" style="flex: 1;">
+                            <i class="fas fa-walking"></i> Ambil Sendiri (Gratis)
+                        </button>
+                        <button class="btn btn-primary" onclick="window.historyController.chooseDelivery(${order.id}, 'DELIVERY')" style="flex: 1;">
+                            <i class="fas fa-truck"></i> Dianter (Rp 10.000)
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${needsPayment ? `
+                <div class="payment-section" style="background: #fff3cd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0;"><i class="fas fa-qrcode"></i> Pembayaran Delivery Fee</h3>
+                    <p>Anda memilih layanan delivery. Silakan lakukan pembayaran delivery fee sebesar:</p>
+                    <div style="background: white; padding: 1rem; border-radius: 5px; margin: 1rem 0;">
+                        <h2 style="color: #28a745; margin: 0;">Rp 10.000</h2>
+                    </div>
+                    <div style="text-align: center; margin: 1.5rem 0;">
+                        <div style="background: white; padding: 2rem; border-radius: 8px; display: inline-block;">
+                            <div style="width: 200px; height: 200px; background: #f0f0f0; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                <i class="fas fa-qrcode" style="font-size: 4rem; color: #666;"></i>
+                            </div>
+                            <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">QRIS Payment (Mock)</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="window.historyController.payQRIS(${order.id})" style="width: 100%;">
+                        <i class="fas fa-check-circle"></i> Konfirmasi Pembayaran (Mock)
+                    </button>
+                </div>
+                ` : ''}
                 
                 <div class="order-info">
                     <div class="info-section">
@@ -249,8 +366,12 @@ export class UI {
     formatOrderStatus(status) {
         const statusMap = {
             'DIPESAN': 'Dipesan',
-            'DIJEMPUT': 'Dijemput',
+            'PESANAN_DIJEMPUT': 'Pesanan Dijemput',
+            'DIAMBIL': 'Diambil',
             'DICUCI': 'Dicuci',
+            'MENUNGGU_KONFIRMASI_DELIVERY': 'Menunggu Konfirmasi Delivery',
+            'MENUNGGU_PEMBAYARAN_DELIVERY': 'Menunggu Pembayaran Delivery',
+            'MENUNGGU_AMBIL_SENDIRI': 'Menunggu Ambil Sendiri',
             'DIKIRIM': 'Dikirim',
             'SELESAI': 'Selesai'
         };

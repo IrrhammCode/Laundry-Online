@@ -22,6 +22,29 @@ export class OrderService {
         }
     }
 
+    async getRecommendations() {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            let headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            
+            const response = await fetch(`${this.baseURL}/orders/recommendations`, {
+                headers: headers,
+                credentials: 'include'
+            });
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Get recommendations error:', error);
+            throw error;
+        }
+    }
+
     async createOrder(orderData) {
         try {
             console.log('Creating order with data:', orderData);

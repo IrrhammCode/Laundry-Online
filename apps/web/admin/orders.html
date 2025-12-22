@@ -19,6 +19,7 @@
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="orders.html" class="nav-link active">Orders</a>
                 <a href="services.html" class="nav-link">Services</a>
+                <a href="reports.html" class="nav-link">Reports</a>
                 <div class="nav-user">
                     <span id="adminName"></span>
                     <button class="btn btn-outline" id="logoutBtn">Logout</button>
@@ -42,8 +43,10 @@
                     <select id="statusFilter">
                         <option value="">All Status</option>
                         <option value="DIPESAN">DIPESAN</option>
-                        <option value="DIJEMPUT">DIJEMPUT</option>
+                        <option value="PESANAN_DIJEMPUT">PESANAN_DIJEMPUT</option>
+                        <option value="DIAMBIL">DIAMBIL</option>
                         <option value="DICUCI">DICUCI</option>
+                        <option value="MENUNGGU_AMBIL_SENDIRI">MENUNGGU_AMBIL_SENDIRI</option>
                         <option value="DIKIRIM">DIKIRIM</option>
                         <option value="SELESAI">SELESAI</option>
                     </select>
@@ -94,6 +97,40 @@
             <div class="modal-body">
                 <div id="orderDetailContent">
                     <!-- Order details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div class="modal" id="chatModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Chat with Customer</h3>
+                <button class="modal-close" id="chatModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <div class="chat-header-info">
+                            <h4>Order #<span id="adminChatOrderId"></span></h4>
+                            <div class="chat-status">
+                                <span class="status-badge" id="adminChatOrderStatus"></span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline" id="refreshAdminChatBtn" title="Refresh Messages">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="chat-messages" id="adminChatMessages">
+                        <!-- Messages will be loaded dynamically -->
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="adminChatInput" placeholder="Type your message...">
+                        <button type="button" id="adminSendMessageBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

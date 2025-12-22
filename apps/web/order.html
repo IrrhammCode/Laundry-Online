@@ -15,11 +15,30 @@
                 <i class="fas fa-tshirt"></i>
                 <span>Laundry & Dry Clean</span>
             </div>
-            <div class="nav-menu">
+            <div class="nav-menu" id="navMenu">
                 <a href="index.html" class="nav-link">Home</a>
+                <a href="order.html" class="nav-link active">New Order</a>
                 <a href="history.html" class="nav-link">My Orders</a>
                 <a href="profile.html" class="nav-link">Profile</a>
-                <div class="nav-user">
+                <div class="nav-user" id="navUser">
+                    <div class="notification-wrapper">
+                        <button class="notification-btn" id="notificationBtn" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        </button>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header">
+                                <h4>Notifications</h4>
+                                <button class="btn btn-sm btn-outline" id="markAllReadBtn">Mark all read</button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <div class="notification-loading">Loading notifications...</div>
+                            </div>
+                            <div class="notification-footer">
+                                <a href="profile.html#notifications">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
                     <span id="userName"></span>
                     <button class="btn btn-outline" id="logoutBtn">Logout</button>
                 </div>
@@ -36,6 +55,15 @@
             </div>
 
             <form id="orderForm" class="order-form">
+                <!-- Recommended Packages -->
+                <div class="form-section" id="recommendedPackagesSection" style="display: none;">
+                    <h2>Recommended Packages</h2>
+                    <p style="color: #666; margin-bottom: 1rem;">Save time by choosing one of our recommended packages</p>
+                    <div class="packages-grid" id="recommendedPackages">
+                        <!-- Packages will be loaded dynamically -->
+                    </div>
+                </div>
+
                 <!-- Services Selection -->
                 <div class="form-section">
                     <h2>Select Services</h2>
@@ -72,6 +100,29 @@
                                 <h3>Self Service</h3>
                                 <p>You will bring your laundry to our location</p>
                                 <span class="price">Free</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Email Notification -->
+                <div class="form-section">
+                    <h2>Email Notification</h2>
+                    <p style="color: #666; margin-bottom: 1rem; font-size: 0.9rem;">Choose where to send order notifications</p>
+                    <div class="form-group">
+                        <label class="radio-option" style="display: flex; align-items: center; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;">
+                            <input type="radio" name="email_option" value="registered" checked style="margin-right: 0.75rem;">
+                            <div>
+                                <strong>Use registered email</strong>
+                                <p style="margin: 0.25rem 0 0 0; color: #666; font-size: 0.875rem;" id="registeredEmailDisplay">Loading...</p>
+                            </div>
+                        </label>
+                        <label class="radio-option" style="display: flex; align-items: center; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px; cursor: pointer;">
+                            <input type="radio" name="email_option" value="custom" style="margin-right: 0.75rem;">
+                            <div style="flex: 1;">
+                                <strong>Use custom email</strong>
+                                <input type="email" name="notification_email" id="notificationEmail" placeholder="Enter email address" 
+                                       style="width: 100%; margin-top: 0.5rem; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; display: none;">
                             </div>
                         </label>
                     </div>

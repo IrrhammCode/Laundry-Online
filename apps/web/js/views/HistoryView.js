@@ -144,6 +144,34 @@ export class HistoryView {
     }
 
     /**
+     * Show review modal
+     */
+    showReviewModal() {
+        this.ui.showModal('reviewModal');
+    }
+
+    /**
+     * Hide review modal
+     */
+    hideReviewModal() {
+        this.ui.hideModal('reviewModal');
+    }
+
+    /**
+     * Show delivery method selection modal
+     */
+    showDeliveryMethodModal() {
+        this.ui.showModal('deliveryMethodModal');
+    }
+
+    /**
+     * Hide delivery method selection modal
+     */
+    hideDeliveryMethodModal() {
+        this.ui.hideModal('deliveryMethodModal');
+    }
+
+    /**
      * Get chat input value
      * @returns {string} - Chat message
      */
@@ -246,6 +274,28 @@ export class HistoryView {
         // Send message button
         if (this.sendMessageBtn && callbacks.onSendMessage) {
             this.sendMessageBtn.addEventListener('click', callbacks.onSendMessage);
+        }
+
+        // Refresh chat button
+        const refreshChatBtn = document.getElementById('refreshChatBtn');
+        if (refreshChatBtn && callbacks.onRefreshChat) {
+            refreshChatBtn.addEventListener('click', callbacks.onRefreshChat);
+        }
+
+        // Review form submit
+        const reviewForm = document.getElementById('reviewForm');
+        if (reviewForm && callbacks.onReviewSubmit) {
+            reviewForm.addEventListener('submit', callbacks.onReviewSubmit);
+        }
+
+        // Review modal close
+        const reviewModalClose = document.getElementById('reviewModalClose');
+        const cancelReviewBtn = document.getElementById('cancelReviewBtn');
+        if (reviewModalClose && callbacks.onReviewModalClose) {
+            reviewModalClose.addEventListener('click', callbacks.onReviewModalClose);
+        }
+        if (cancelReviewBtn && callbacks.onReviewModalClose) {
+            cancelReviewBtn.addEventListener('click', callbacks.onReviewModalClose);
         }
     }
 

@@ -25,6 +25,24 @@
                     <button class="btn btn-primary" id="registerBtn">Register</button>
                 </div>
                 <div class="nav-user" id="navUser" style="display: none;">
+                    <div class="notification-wrapper">
+                        <button class="notification-btn" id="notificationBtn" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        </button>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header">
+                                <h4>Notifications</h4>
+                                <button class="btn btn-sm btn-outline" id="markAllReadBtn">Mark all read</button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <div class="notification-loading">Loading notifications...</div>
+                            </div>
+                            <div class="notification-footer">
+                                <a href="#" id="viewAllNotifications">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
                     <span id="userName"></span>
                     <button class="btn btn-outline" id="logoutBtn">Logout</button>
                 </div>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Complaints - Laundry & Dry Clean</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar" id="navbar">
+            <!-- Navbar akan di-render oleh AppController -->
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>My Complaints</h1>
+                <p>Lihat status keluhan yang telah Anda submit</p>
+                <a href="complaint.html" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Submit New Complaint
+                </a>
+            </div>
+
+            <!-- Filter -->
+            <div class="filter-section" style="margin-bottom: 2rem;">
+                <select id="statusFilter" class="form-control" style="max-width: 200px;">
+                    <option value="">All Status</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                </select>
+            </div>
+
+            <!-- Complaints List -->
+            <div id="complaintsList" class="complaints-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading complaints...</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="pagination" style="display: none;"></div>
+        </div>
+    </main>
+
+    <!-- Complaint Detail Modal -->
+    <div class="modal" id="complaintDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Complaint Details</h3>
+                <button class="modal-close" id="complaintDetailModalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="complaintDetailContent">
+                <!-- Content akan diisi oleh JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        window.VITE_API_URL = isProduction 
+            ? 'https://laundry-online-production.up.railway.app/api'
+            : 'http://localhost:3001/api';
+    </script>
+    <script type="module" src="js/controllers/AppController.js"></script>
+    <script type="module" src="js/controllers/ComplaintsController.js"></script>
+</body>
+</html>
+

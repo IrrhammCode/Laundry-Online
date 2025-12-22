@@ -29,3 +29,11 @@ build/
 *.min.js
 *.min.css
 
+# Documentation files (except README.md)
+*.md
+!README.md
+!**/README.md
+
+# Scripts (setup/migration scripts - not needed in production)
+apps/api/scripts/
+

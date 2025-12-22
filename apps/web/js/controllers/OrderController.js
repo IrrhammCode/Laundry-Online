@@ -33,20 +33,87 @@ export class OrderController {
         // Load services
         await this.loadServices();
         
+        // Setup email form
+        await this.setupEmailForm();
+        
         // Setup event listeners
         this.setupEventListeners();
+    }
+
+    async setupEmailForm() {
+        // Get user email and display
+        try {
+            const user = await this.authService.getCurrentUser();
+            if (user) {
+                const registeredEmailDisplay = document.getElementById('registeredEmailDisplay');
+                if (registeredEmailDisplay) {
+                    registeredEmailDisplay.textContent = user.email || 'Not available';
+                }
+            } else {
+                const userInfo = localStorage.getItem('userInfo');
+                if (userInfo) {
+                    try {
+                        const parsedUser = JSON.parse(userInfo);
+                        const registeredEmailDisplay = document.getElementById('registeredEmailDisplay');
+                        if (registeredEmailDisplay) {
+                            registeredEmailDisplay.textContent = parsedUser.email || 'Not available';
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse user info:', e);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to get user email:', error);
+        }
+
+        // Toggle email input based on radio selection
+        const emailOptions = document.querySelectorAll('input[name="email_option"]');
+        const notificationEmailInput = document.getElementById('notificationEmail');
+        
+        emailOptions.forEach(option => {
+            option.addEventListener('change', () => {
+                if (notificationEmailInput) {
+                    if (option.value === 'custom') {
+                        notificationEmailInput.style.display = 'block';
+                        notificationEmailInput.required = true;
+                    } else {
+                        notificationEmailInput.style.display = 'none';
+                        notificationEmailInput.required = false;
+                        notificationEmailInput.value = '';
+                    }
+                }
+            });
+        });
     }
 
     async checkAuth() {
         try {
             const user = await this.authService.getCurrentUser();
             if (user) {
+                // Only CUSTOMER can access this page
+                if (user.role !== 'CUSTOMER') {
+                    if (user.role === 'ADMIN') {
+                        this.view.redirect('admin/dashboard.html');
+                    } else {
+                        this.view.redirect('index.html');
+                    }
+                    return;
+                }
                 this.view.showUserNav(user);
             } else {
                 const userInfo = localStorage.getItem('userInfo');
                 if (userInfo) {
-                    const user = JSON.parse(userInfo);
-                    this.view.showUserNav(user);
+                    const parsedUser = JSON.parse(userInfo);
+                    if (parsedUser.role !== 'CUSTOMER') {
+                        if (parsedUser.role === 'ADMIN') {
+                            this.view.redirect('admin/dashboard.html');
+                        } else {
+                            this.view.redirect('index.html');
+                        }
+                        return;
+                    }
+                    this.view.showUserNav(parsedUser);
                 } else {
                     this.view.redirect('index.html');
                 }
@@ -54,8 +121,16 @@ export class OrderController {
         } catch (error) {
             const userInfo = localStorage.getItem('userInfo');
             if (userInfo) {
-                const user = JSON.parse(userInfo);
-                this.view.showUserNav(user);
+                const parsedUser = JSON.parse(userInfo);
+                if (parsedUser.role !== 'CUSTOMER') {
+                    if (parsedUser.role === 'ADMIN') {
+                        this.view.redirect('admin/dashboard.html');
+                    } else {
+                        this.view.redirect('index.html');
+                    }
+                    return;
+                }
+                this.view.showUserNav(parsedUser);
             } else {
                 this.view.redirect('index.html');
             }
@@ -66,8 +141,23 @@ export class OrderController {
         try {
             this.services = await this.orderService.getServices();
             this.view.renderServices(this.services);
+            
+            // Load recommended packages
+            await this.loadRecommendedPackages();
         } catch (error) {
             this.view.showAlert('Failed to load services', 'error');
+        }
+    }
+
+    async loadRecommendedPackages() {
+        try {
+            const result = await this.orderService.getRecommendations();
+            if (result.ok && result.data.packages && result.data.packages.length > 0) {
+                this.view.renderRecommendedPackages(result.data.packages);
+            }
+        } catch (error) {
+            console.error('Failed to load recommendations:', error);
+            // Don't show error, just don't display recommendations
         }
     }
 
@@ -162,7 +252,16 @@ export class OrderController {
         }
 
         const formData = this.view.getFormData();
-        if (!formData) return;
+        if (!formData) {
+            this.view.showAlert('Please fill in the form', 'error');
+            return;
+        }
+
+        // Validate pickup_method
+        if (!formData.pickup_method || !['PICKUP', 'SELF'].includes(formData.pickup_method)) {
+            this.view.showAlert('Please select a pickup method', 'error');
+            return;
+        }
 
         // Get current user ID
         const user = await this.authService.getCurrentUser();
@@ -174,12 +273,20 @@ export class OrderController {
         try {
             this.view.showLoading();
             
+            console.log('Submitting order with:', {
+                items: this.selectedItems,
+                pickup_method: formData.pickup_method,
+                notes: formData.notes,
+                notification_email: formData.notification_email
+            });
+            
             // Menggunakan LaundryService.buatPesanan() sesuai DPPL Algoritma #1
             const result = await this.laundryService.buatPesanan(
                 user.id,
                 this.selectedItems,
                 formData.pickup_method,
-                formData.notes
+                formData.notes,
+                formData.notification_email
             );
             
             if (result.ok) {
