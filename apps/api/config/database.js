@@ -28,7 +28,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
-// Test connection
+// Test connection (async, don't block startup)
 const testConnection = async () => {
   try {
     // Test query to verify connection
@@ -42,12 +42,18 @@ const testConnection = async () => {
       console.log('⚠️  Supabase connected, but tables not yet created. Run migration script.');
     } else {
       console.error('❌ Supabase connection failed:', error.message);
-      process.exit(1);
+      // Don't exit in serverless environment (Vercel)
+      if (process.env.VERCEL !== '1' && require.main === module) {
+        process.exit(1);
+      }
     }
   }
 };
 
-// Initialize connection test
-testConnection();
+// Initialize connection test (non-blocking)
+// Don't await - let it run in background
+if (require.main === module || process.env.NODE_ENV !== 'production') {
+  testConnection();
+}
 
 module.exports = supabase;

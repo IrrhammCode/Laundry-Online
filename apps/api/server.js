@@ -272,20 +272,23 @@ app.use('*', (req, res) => {
 // Railway dan Vercel auto-assign PORT
 const PORT = process.env.PORT || 3001;
 
-// Export untuk Vercel serverless (jika perlu)
+// Make io available globally for other modules
+global.io = io;
+
+// Export untuk Vercel serverless
+// Vercel akan menggunakan ini sebagai handler
 if (process.env.VERCEL) {
   module.exports = app;
 } else {
   // Normal server mode (Railway, local, dll)
-  server.listen(PORT, () => {
-    console.log(`🚀 Laundry API server running on port ${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  });
+  if (require.main === module) {
+    server.listen(PORT, () => {
+      console.log(`🚀 Laundry API server running on port ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+    });
+  }
+  // Export untuk development/testing
+  module.exports = { app, server, io };
 }
-
-// Make io available globally for other modules
-global.io = io;
-
-module.exports = { app, server, io };
 
 
