@@ -186,6 +186,58 @@ export class OrderController {
     }
 
     /**
+     * Business Logic: Select package and add all services to order
+     * @param {string} packageId - Package ID
+     * @param {Array} packageServices - Array of service objects from package
+     */
+    selectPackage(packageId, packageServices) {
+        if (!packageServices || !Array.isArray(packageServices)) {
+            console.error('Invalid package services:', packageServices);
+            this.view.showAlert('Invalid package data', 'error');
+            return;
+        }
+
+        // Add each service from package to order
+        packageServices.forEach(pkgService => {
+            // Find the service in our services list to get full details
+            const service = this.services.find(s => s.id === pkgService.id);
+            if (!service) {
+                console.warn('Service not found:', pkgService.id);
+                return;
+            }
+
+            // Check if service already exists in selectedItems
+            const existingItem = this.selectedItems.find(item => item.service_id === service.id);
+            
+            if (existingItem) {
+                // If exists, increment quantity by 1
+                existingItem.qty += 1;
+            } else {
+                // If not exists, add new item
+                this.selectedItems.push({
+                    service_id: service.id,
+                    qty: 1,
+                    unit_price: parseFloat(service.base_price),
+                    service_name: service.name,
+                    unit: service.unit
+                });
+            }
+        });
+
+        // Update view to show added items
+        this.updateView();
+        
+        // Show success message
+        this.view.showAlert('Package added to order!', 'success');
+        
+        // Scroll to order items section
+        const orderItemsSection = document.getElementById('orderItems');
+        if (orderItemsSection) {
+            orderItemsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    /**
      * Business Logic: Remove service from order
      */
     removeService(serviceId) {

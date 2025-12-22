@@ -24,7 +24,7 @@ export class OrderView {
         if (!packagesSection || !packagesGrid || packages.length === 0) return;
         
         packagesSection.style.display = 'block';
-        packagesGrid.innerHTML = packages.map(pkg => `
+        packagesGrid.innerHTML = packages.map((pkg, index) => `
             <div class="package-card">
                 <div class="package-badge">${pkg.badge}</div>
                 <h3>${pkg.name}</h3>
@@ -44,12 +44,26 @@ export class OrderView {
                     ` : ''}
                     <div class="package-price-final">Rp ${pkg.final_price.toLocaleString('id-ID')}</div>
                 </div>
-                <button type="button" class="btn btn-primary btn-block" 
-                        onclick="window.orderController.selectPackage('${pkg.id}', ${JSON.stringify(pkg.services).replace(/"/g, '&quot;')})">
+                <button type="button" class="btn btn-primary btn-block add-package-btn" 
+                        data-package-index="${index}">
                     <i class="fas fa-shopping-cart"></i> Add Package
                 </button>
             </div>
         `).join('');
+        
+        // Store packages data for later use
+        this.packages = packages;
+        
+        // Setup event listeners for package buttons
+        const addPackageButtons = packagesGrid.querySelectorAll('.add-package-btn');
+        addPackageButtons.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                const packageData = packages[index];
+                if (packageData && window.orderController) {
+                    window.orderController.selectPackage(packageData.id, packageData.services);
+                }
+            });
+        });
     }
 
     /**
