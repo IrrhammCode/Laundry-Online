@@ -63,23 +63,24 @@
     </main>
 
     <script>
-        // Set API URL - Menggunakan environment variable atau URL dinamis
+        // Set API URL - Menggunakan environment variable atau hardcoded backend URL
         const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         
         // Cek environment variable dulu (di-inject saat build)
         let apiUrl = '%VITE_API_URL%';
         
-        // Jika masih placeholder, gunakan URL dinamis
+        // Jika masih placeholder, gunakan hardcoded backend URL
         if (apiUrl === '%VITE_API_URL%' || !apiUrl || apiUrl === '') {
             if (isProduction) {
-                const hostname = window.location.hostname;
-                apiUrl = `https://${hostname}/api`;
+                // Backend URL yang sudah di-deploy
+                apiUrl = 'https://laundry-online-fix.vercel.app/api';
             } else {
                 apiUrl = 'http://localhost:3001/api';
             }
         }
         
         window.VITE_API_URL = apiUrl;
+        console.log('API URL set to:', apiUrl);
     </script>
     <script type="module" src="js/controllers/AppController.js"></script>
     <script type="module" src="js/controllers/ComplaintController.js"></script>

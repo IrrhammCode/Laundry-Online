@@ -84,13 +84,13 @@
     </main>
 
     <script type="module">
-        // Set API URL - Menggunakan environment variable atau URL dinamis
+        // Set API URL - Menggunakan environment variable atau hardcoded backend URL
         const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         
         // Cek environment variable dulu (di-inject saat build)
         let apiUrl = '%VITE_API_URL%';
         
-        // Jika masih placeholder, gunakan URL dinamis atau fallback
+        // Jika masih placeholder, gunakan hardcoded backend URL
         if (apiUrl === '%VITE_API_URL%' || !apiUrl || apiUrl === '') {
             // Try import.meta.env (Vite)
             try {
@@ -101,11 +101,11 @@
                 // import.meta.env not available
             }
             
-            // Jika masih belum ada, gunakan URL dinamis
+            // Jika masih belum ada, gunakan hardcoded backend URL
             if (!apiUrl || apiUrl === '%VITE_API_URL%') {
                 if (isProduction) {
-                    const hostname = window.location.hostname;
-                    apiUrl = `https://${hostname}/api`;
+                    // Backend URL yang sudah di-deploy
+                    apiUrl = 'https://laundry-online-fix.vercel.app/api';
                 } else {
                     apiUrl = 'http://localhost:3001/api';
                 }
@@ -114,6 +114,7 @@
         
         window.API_URL = apiUrl;
         window.VITE_API_URL = apiUrl; // Set juga untuk kompatibilitas
+        console.log('API URL set to:', apiUrl);
         
         // Import ChatService for notifications
         import { ChatService } from './js/services/chat.js';
