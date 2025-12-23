@@ -85,6 +85,7 @@ export class UI {
                 'index.html': 'Home',
                 'order.html': 'New Order',
                 'history.html': 'My Orders',
+                'complaints.html': 'Complaints',
                 'profile.html': 'Profile'
             };
             

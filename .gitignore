@@ -37,3 +37,8 @@ build/
 # Scripts (setup/migration scripts - not needed in production)
 apps/api/scripts/
 
+# Documentation (SKPL & DPPL - tidak di-push ke GitHub)
+dokumentasi/
+dokumentasi.zip
+*.zip
+
