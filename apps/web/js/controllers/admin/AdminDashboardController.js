@@ -668,6 +668,184 @@ export class AdminDashboardController {
             }
         }
     }
+
+    setupNotificationListeners() {
+        const notificationBtn = document.getElementById('adminNotificationBtn');
+        const notificationDropdown = document.getElementById('adminNotificationDropdown');
+        const markAllReadBtn = document.getElementById('adminMarkAllReadBtn');
+        const viewAllNotifications = document.getElementById('adminViewAllNotifications');
+
+        // Toggle dropdown
+        if (notificationBtn && notificationDropdown) {
+            notificationBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = notificationDropdown.classList.contains('show');
+                
+                if (isOpen) {
+                    notificationDropdown.classList.remove('show');
+                } else {
+                    notificationDropdown.classList.add('show');
+                    // Load notifications when opening
+                    this.loadAdminNotifications();
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.classList.remove('show');
+                }
+            });
+        }
+
+        // Mark all as read
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', () => this.markAllNotificationsAsRead());
+        }
+
+        // View all notifications
+        if (viewAllNotifications) {
+            viewAllNotifications.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Could navigate to a notifications page if exists
+                console.log('View all notifications clicked');
+            });
+        }
+
+        // Load unread count on init
+        this.loadUnreadCount();
+        
+        // Refresh unread count every 30 seconds
+        setInterval(() => {
+            this.loadUnreadCount();
+        }, 30000);
+    }
+
+    async loadAdminNotifications() {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            let headers = {};
+            
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/notifications?page=1&limit=10`, {
+                headers: headers,
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.ok) {
+                const notifications = result.data.notifications || [];
+                this.view.renderAdminNotifications(notifications);
+            } else {
+                const list = document.getElementById('adminNotificationList');
+                if (list) {
+                    list.innerHTML = '<div class="notification-empty">Failed to load notifications</div>';
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load admin notifications:', error);
+            const list = document.getElementById('adminNotificationList');
+            if (list) {
+                list.innerHTML = '<div class="notification-empty">Failed to load notifications</div>';
+            }
+        }
+    }
+
+    async loadUnreadCount() {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            let headers = {};
+            
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
+            const response = await fetch(`${apiURL}/admin/notifications/unread-count`, {
+                headers: headers,
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                return;
+            }
+            
+            const result = await response.json();
+            
+            if (result.ok) {
+                const unreadCount = result.data.unread_count || 0;
+                const badge = document.getElementById('adminNotificationBadge');
+                if (badge) {
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load unread count:', error);
+        }
+    }
+
+    async markAllNotificationsAsRead() {
+        try {
+            // Get all unread notifications first
+            const authToken = localStorage.getItem('authToken');
+            let headers = {};
+            
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            
+            const apiURL = (typeof window !== 'undefined' && window.VITE_API_URL) || 'http://localhost:3001/api';
+            
+            // Get all notifications
+            const response = await fetch(`${apiURL}/admin/notifications?page=1&limit=1000`, {
+                headers: headers,
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.ok) {
+                const notifications = result.data.notifications || [];
+                const unreadNotifications = notifications.filter(n => !n.sent_at);
+                
+                // Mark each unread notification as read
+                const markPromises = unreadNotifications.map(notif => {
+                    return fetch(`${apiURL}/admin/notifications/${notif.id}/read`, {
+                        method: 'PATCH',
+                        headers: headers,
+                        credentials: 'include'
+                    });
+                });
+                
+                await Promise.all(markPromises);
+                
+                // Reload notifications and unread count
+                await this.loadAdminNotifications();
+                await this.loadUnreadCount();
+            }
+        } catch (error) {
+            console.error('Failed to mark all notifications as read:', error);
+            this.view.showAlert('Failed to mark all notifications as read', 'error');
+        }
+    }
 }
 
 let adminDashboardController;
