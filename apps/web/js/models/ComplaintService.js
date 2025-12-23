@@ -78,5 +78,47 @@ export class ComplaintService {
             throw error;
         }
     }
+
+    // Admin methods
+    async getAdminComplaints(page = 1, limit = 10, status = '', search = '') {
+        try {
+            let url = `${this.baseURL}/complaints/admin/all?page=${page}&limit=${limit}`;
+            if (status) {
+                url += `&status=${status}`;
+            }
+            if (search) {
+                url += `&search=${encodeURIComponent(search)}`;
+            }
+
+            const response = await fetch(url, {
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            return await response.json();
+        } catch (error) {
+            console.error('Get admin complaints error:', error);
+            throw error;
+        }
+    }
+
+    async updateComplaintStatus(complaintId, status, adminResponse = null) {
+        try {
+            const response = await fetch(`${this.baseURL}/complaints/admin/${complaintId}/status`, {
+                method: 'PATCH',
+                headers: this.getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    status,
+                    admin_response: adminResponse || null
+                })
+            });
+
+            return await response.json();
+        } catch (error) {
+            console.error('Update complaint status error:', error);
+            throw error;
+        }
+    }
 }
 
