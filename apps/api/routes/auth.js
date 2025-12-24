@@ -311,7 +311,7 @@ router.post('/admin/login', [
   }
 });
 
-// FR-08: Forgot Password
+// FR-08: Forgot Password - Cek email terdaftar
 router.post('/forgot', [
   body('email').isEmail().normalizeEmail().withMessage('Valid email required')
 ], async (req, res) => {
@@ -342,50 +342,27 @@ router.post('/forgot', [
       });
     }
 
-    const user = users;
-
-    // Generate reset token
-    const resetToken = jwt.sign(
-      { userId: user.id, type: 'password_reset' },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    // Send email
-    const transporter = createTransporter();
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM,
-      to: email,
-      subject: 'Reset Password - Laundry System',
-      html: `
-        <h2>Reset Password</h2>
-        <p>Hello ${user.name},</p>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetUrl}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-      `
-    });
-
+    // Email ditemukan, user bisa langsung reset password
     res.json({
       ok: true,
-      message: 'Password reset link sent to your email'
+      message: 'Email verified. You can now reset your password.',
+      data: {
+        email: email
+      }
     });
 
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({
       ok: false,
-      error: 'Failed to send reset email'
+      error: 'Failed to verify email'
     });
   }
 });
 
-// FR-08: Reset Password
-router.post('/reset', [
-  body('token').notEmpty().withMessage('Reset token required'),
+// FR-08: Reset Password - Langsung update password dengan email
+router.post('/reset-password', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
 ], async (req, res) => {
   try {
@@ -398,15 +375,19 @@ router.post('/reset', [
       });
     }
 
-    const { token, password } = req.body;
+    const { email, password } = req.body;
 
-    // Verify reset token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    if (decoded.type !== 'password_reset') {
-      return res.status(400).json({
+    // Cek apakah email terdaftar
+    const { data: user, error: userError } = await db
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (userError || !user) {
+      return res.status(404).json({
         ok: false,
-        error: 'Invalid reset token'
+        error: 'Email not found'
       });
     }
 
@@ -419,7 +400,7 @@ router.post('/reset', [
     const { error: updateError } = await db
       .from('users')
       .update({ password_hash: passwordHash })
-      .eq('id', decoded.userId);
+      .eq('id', user.id);
 
     if (updateError) {
       throw updateError;
@@ -431,13 +412,6 @@ router.post('/reset', [
     });
 
   } catch (error) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(400).json({
-        ok: false,
-        error: 'Invalid or expired reset token'
-      });
-    }
-
     console.error('Reset password error:', error);
     res.status(500).json({
       ok: false,

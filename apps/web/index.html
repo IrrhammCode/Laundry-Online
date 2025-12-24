@@ -195,15 +195,45 @@
     <div class="modal" id="forgotPasswordModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Forgot Password</h3>
+                <h3 id="forgotPasswordTitle">Forgot Password</h3>
                 <button class="modal-close" id="forgotPasswordModalClose">&times;</button>
             </div>
-            <form class="modal-body" id="forgotPasswordForm">
+            <!-- Step 1: Email Verification -->
+            <form class="modal-body" id="forgotPasswordForm" style="display: block;">
                 <div class="form-group">
                     <label for="forgotEmail">Email</label>
                     <input type="email" id="forgotEmail" name="email" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-full">Send Reset Link</button>
+                <button type="submit" class="btn btn-primary btn-full">Verify Email</button>
+            </form>
+            <!-- Step 2: Reset Password -->
+            <form class="modal-body" id="resetPasswordForm" style="display: none;">
+                <input type="hidden" id="resetEmail" name="email">
+                <div class="form-group">
+                    <label for="newPassword">Password Baru</label>
+                    <input 
+                        type="password" 
+                        id="newPassword" 
+                        name="password" 
+                        required 
+                        minlength="6"
+                        placeholder="Minimal 6 karakter"
+                    >
+                    <small class="form-text">Password harus minimal 6 karakter</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Konfirmasi Password</label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        required 
+                        minlength="6"
+                        placeholder="Ulangi password baru"
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Reset Password</button>
+                <button type="button" class="btn btn-outline btn-full" id="backToEmailBtn" style="margin-top: 10px;">Kembali</button>
             </form>
         </div>
     </div>

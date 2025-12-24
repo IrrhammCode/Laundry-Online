@@ -82,14 +82,12 @@ export class AuthService {
     }
 
     /**
-     * Algoritma #19: resetPassword()
-     * procedure resetPassword(email)
+     * Algoritma #19: verifyEmailForReset()
+     * procedure verifyEmailForReset(email)
      * 1. Cek apakah email terdaftar
-     * 2. Jika ya, buat token reset dan kirim ke email
-     * 3. User klik link reset, lalu masukkan password baru
-     * 4. Simpan password baru ke database setelah dienkripsi
+     * 2. Jika ya, return success untuk lanjut ke step reset password
      */
-    async resetPassword(email) {
+    async verifyEmailForReset(email) {
         try {
             // 1. Cek apakah email terdaftar
             const response = await fetch(`${this.baseURL}/auth/forgot`, {
@@ -103,28 +101,35 @@ export class AuthService {
             const result = await response.json();
             return result;
         } catch (error) {
-            console.error('Error resetPassword:', error);
+            console.error('Error verifyEmailForReset:', error);
             return {
                 ok: false,
-                error: error.message || 'Gagal mengirim email reset password'
+                error: error.message || 'Gagal verifikasi email'
             };
         }
     }
 
-    async confirmResetPassword(token, password) {
+    /**
+     * Algoritma #19: resetPasswordByEmail()
+     * procedure resetPasswordByEmail(email, password)
+     * 1. Verifikasi email terdaftar
+     * 2. Enkripsi password baru
+     * 3. Simpan password baru ke database
+     */
+    async resetPasswordByEmail(email, password) {
         try {
-            const response = await fetch(`${this.baseURL}/auth/reset`, {
+            const response = await fetch(`${this.baseURL}/auth/reset-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ token, password })
+                body: JSON.stringify({ email, password })
             });
 
             const result = await response.json();
             return result;
         } catch (error) {
-            console.error('Error confirmResetPassword:', error);
+            console.error('Error resetPasswordByEmail:', error);
             return {
                 ok: false,
                 error: error.message || 'Gagal reset password'

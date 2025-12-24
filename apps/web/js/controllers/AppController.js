@@ -285,7 +285,7 @@ export class AppController {
     }
 
     /**
-     * Handle forgot password menggunakan AuthService.resetPassword() sesuai Algoritma #19 DPPL
+     * Handle forgot password - Step 1: Verify email
      */
     async handleForgotPassword(e) {
         e.preventDefault();
@@ -296,18 +296,64 @@ export class AppController {
         try {
             this.view.showLoading();
             
-            // Menggunakan AuthService.resetPassword() sesuai DPPL Algoritma #19
-            const result = await this.authService.resetPassword(data.email);
+            // Verifikasi email terdaftar
+            const result = await this.authService.verifyEmailForReset(data.email);
+            
+            if (result.ok) {
+                // Email cocok, tampilkan form reset password
+                this.view.showResetPasswordForm(data.email);
+            } else {
+                this.view.showAlert(result.error || 'Email tidak ditemukan', 'error');
+            }
+        } catch (error) {
+            this.view.showAlert('Gagal verifikasi email. Silakan coba lagi.', 'error');
+        } finally {
+            this.view.hideLoading();
+        }
+    }
+
+    /**
+     * Handle reset password - Step 2: Reset password dengan email
+     */
+    async handleResetPassword(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        const email = formData.get('email');
+        const password = formData.get('password');
+        const confirmPassword = formData.get('confirmPassword');
+
+        // Validasi password match
+        if (password !== confirmPassword) {
+            this.view.showAlert('Password tidak cocok. Silakan cek kembali.', 'error');
+            return;
+        }
+
+        // Validasi password length
+        if (password.length < 6) {
+            this.view.showAlert('Password harus minimal 6 karakter.', 'error');
+            return;
+        }
+
+        try {
+            this.view.showLoading();
+            
+            // Reset password dengan email
+            const result = await this.authService.resetPasswordByEmail(email, password);
             
             if (result.ok) {
                 this.view.hideForgotPasswordModal();
-                this.view.showAlert('Password reset link sent to your email!', 'success');
+                this.view.showAlert('Password berhasil diubah! Silakan login dengan password baru.', 'success');
                 this.view.resetForm('forgotPasswordForm');
+                this.view.resetForm('resetPasswordForm');
+                // Reset modal ke step 1
+                this.view.resetForgotPasswordModal();
             } else {
-                this.view.showAlert(result.error || 'Failed to send reset link', 'error');
+                this.view.showAlert(result.error || 'Gagal reset password', 'error');
             }
         } catch (error) {
-            this.view.showAlert('Failed to send reset link. Please try again.', 'error');
+            this.view.showAlert('Gagal reset password. Silakan coba lagi.', 'error');
         } finally {
             this.view.hideLoading();
         }
@@ -403,6 +449,7 @@ export class AppController {
             onLogin: (e) => this.handleLogin(e),
             onRegister: (e) => this.handleRegister(e),
             onForgotPassword: (e) => this.handleForgotPassword(e),
+            onResetPassword: (e) => this.handleResetPassword(e),
             onResetRateLimit: () => this.resetRateLimit(),
             onOrderNow: () => this.handleOrderNow(),
             onLogout: () => this.logout()

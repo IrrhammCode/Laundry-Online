@@ -94,6 +94,51 @@ export class AppView {
     }
 
     /**
+     * Get reset password form data
+     * @returns {Object} - Reset password form data
+     */
+    getResetPasswordFormData() {
+        const form = document.getElementById('resetPasswordForm');
+        if (!form) return null;
+
+        const formData = new FormData(form);
+        return {
+            email: formData.get('email'),
+            password: formData.get('password'),
+            confirmPassword: formData.get('confirmPassword')
+        };
+    }
+
+    /**
+     * Show reset password form (step 2) and hide email form (step 1)
+     * @param {string} email - Verified email
+     */
+    showResetPasswordForm(email) {
+        const emailForm = document.getElementById('forgotPasswordForm');
+        const resetForm = document.getElementById('resetPasswordForm');
+        const resetEmailInput = document.getElementById('resetEmail');
+        const title = document.getElementById('forgotPasswordTitle');
+
+        if (emailForm) emailForm.style.display = 'none';
+        if (resetForm) resetForm.style.display = 'block';
+        if (resetEmailInput) resetEmailInput.value = email;
+        if (title) title.textContent = 'Reset Password';
+    }
+
+    /**
+     * Reset forgot password modal to step 1
+     */
+    resetForgotPasswordModal() {
+        const emailForm = document.getElementById('forgotPasswordForm');
+        const resetForm = document.getElementById('resetPasswordForm');
+        const title = document.getElementById('forgotPasswordTitle');
+
+        if (emailForm) emailForm.style.display = 'block';
+        if (resetForm) resetForm.style.display = 'none';
+        if (title) title.textContent = 'Forgot Password';
+    }
+
+    /**
      * Reset form
      * @param {string} formId - Form ID
      */
@@ -350,7 +395,10 @@ export class AppView {
 
         const forgotPasswordModalClose = document.getElementById('forgotPasswordModalClose');
         if (forgotPasswordModalClose) {
-            forgotPasswordModalClose.addEventListener('click', () => this.hideForgotPasswordModal());
+            forgotPasswordModalClose.addEventListener('click', () => {
+                this.hideForgotPasswordModal();
+                this.resetForgotPasswordModal();
+            });
         }
 
         // Forms
@@ -390,6 +438,18 @@ export class AppView {
         const forgotPasswordForm = document.getElementById('forgotPasswordForm');
         if (forgotPasswordForm && callbacks.onForgotPassword) {
             forgotPasswordForm.addEventListener('submit', callbacks.onForgotPassword);
+        }
+
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        if (resetPasswordForm && callbacks.onResetPassword) {
+            resetPasswordForm.addEventListener('submit', callbacks.onResetPassword);
+        }
+
+        const backToEmailBtn = document.getElementById('backToEmailBtn');
+        if (backToEmailBtn) {
+            backToEmailBtn.addEventListener('click', () => {
+                this.resetForgotPasswordModal();
+            });
         }
 
         // Reset rate limit button
