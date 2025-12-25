@@ -41,6 +41,8 @@ export class AppController {
             if (user) {
                 this.view.showUserNav(user);
                 this.view.hideAuthNav();
+                // Setup notification listeners setelah user nav ditampilkan
+                this.setupNotificationListeners();
                 // Load notifications after auth check (only for customer)
                 if (user.role === 'CUSTOMER') {
                     await this.loadNotifications();
@@ -404,27 +406,61 @@ export class AppController {
         });
     }
 
-    setupEventListeners() {
-        // Notification button
-        const notificationBtn = document.getElementById('notificationBtn');
-        if (notificationBtn) {
-            notificationBtn.addEventListener('click', (e) => {
+    /**
+     * Setup notification listeners
+     * Dipanggil setelah user nav ditampilkan untuk memastikan elemen sudah ada
+     */
+    setupNotificationListeners() {
+        // Hapus listener lama jika ada (untuk menghindari duplikasi)
+        if (this._notificationClickHandler) {
+            document.removeEventListener('click', this._notificationClickHandler);
+        }
+        
+        // Notification button - menggunakan event delegation
+        // Menangkap klik pada button atau elemen di dalamnya (icon, badge, dll)
+        this._notificationClickHandler = (e) => {
+            const notificationBtn = document.getElementById('notificationBtn');
+            if (!notificationBtn) return;
+            
+            // Cek apakah klik terjadi pada button atau elemen di dalamnya (icon, badge, dll)
+            const clickedOnButton = notificationBtn === e.target || 
+                                   notificationBtn.contains(e.target) ||
+                                   e.target.closest('#notificationBtn') === notificationBtn;
+            
+            if (clickedOnButton) {
                 e.stopPropagation();
+                
+                const dropdown = document.getElementById('notificationDropdown');
+                const isOpen = dropdown && dropdown.classList.contains('show');
+                
                 this.view.toggleNotificationDropdown();
-                // Load notifications when dropdown opens
-                if (document.getElementById('notificationDropdown')?.classList.contains('show')) {
-                    this.loadNotificationList();
+                
+                // Load notifications when dropdown opens (setelah toggle)
+                if (!isOpen) {
+                    // Dropdown baru dibuka, load notifications
+                    setTimeout(() => {
+                        this.loadNotificationList();
+                    }, 100);
                 }
-            });
-        }
+            }
+        };
+        
+        document.addEventListener('click', this._notificationClickHandler);
+    }
 
-        // Mark all as read button
-        const markAllReadBtn = document.getElementById('markAllReadBtn');
-        if (markAllReadBtn) {
-            markAllReadBtn.addEventListener('click', () => {
+    setupEventListeners() {
+        // Setup notification listeners akan dipanggil setelah user login
+        // melalui setupNotificationListeners() di checkAuth()
+
+        // Mark all as read button - menggunakan event delegation
+        document.addEventListener('click', (e) => {
+            const markAllReadBtn = e.target.closest('#markAllReadBtn');
+            if (markAllReadBtn) {
+                e.stopPropagation();
+                e.preventDefault();
                 this.markAllNotificationsAsRead();
-            });
-        }
+            }
+        });
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
